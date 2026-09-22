@@ -1,0 +1,14 @@
+# Environment & caches
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+
+# Data — regenerate via the pipeline; raw DB comes from Kaggle
+*.sqlite
+*.sqlite3
+exports/
+
+# OS
+.DS_Store
+Thumbs.db

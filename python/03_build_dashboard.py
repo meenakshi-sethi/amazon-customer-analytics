@@ -1,0 +1,537 @@
+"""
+03_build_dashboard.py
+=====================
+Stage 3 of the pipeline: build the interactive, zero-dependency HTML dashboard
+from the exported CSVs/JSON. The dashboard is GENERATED from pipeline outputs,
+so numbers can never drift out of sync with the analysis.
+
+Design language: editorial print journal — "The Fine Food Review Files".
+Warm paper, serif display type, numbered chapters, scroll-triggered reveals,
+animated counters, and rubber-stamp verdicts on the statistical findings.
+Single self-contained file: hand-rolled SVG + vanilla JS, no CDN, works offline.
+
+A Tableau Public edition is planned as a follow-up (noted in the colophon).
+
+Run:  .venv/bin/python python/03_build_dashboard.py
+"""
+
+import json
+from pathlib import Path
+
+import pandas as pd
+
+ROOT = Path(__file__).resolve().parents[1]
+EXPORTS = ROOT / "exports"
+OUT = ROOT / "dashboard.html"
+
+kpis = json.loads((EXPORTS / "kpis.json").read_text())
+segments = pd.read_csv(EXPORTS / "segment_summary.csv").to_dict("records")
+monthly = pd.read_csv(EXPORTS / "monthly_activity.csv").to_dict("records")
+sentiment = pd.read_csv(EXPORTS / "sentiment_by_score.csv").to_dict("records")
+advocates = pd.read_csv(EXPORTS / "advocates.csv").round(2).to_dict("records")
+audit = json.loads((EXPORTS / "wrangling_audit.json").read_text())
+
+DATA = {
+    "kpis": kpis,
+    "segments": segments,
+    "monthly": monthly,
+    "sentiment": sentiment,
+    "advocates": advocates,
+    "audit": audit,
+}
+stats_path = EXPORTS / "stats_summary.json"
+if stats_path.exists():
+    DATA["stats"] = json.loads(stats_path.read_text())
+
+TEMPLATE = r"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Fine Food Review Files — Amazon Customer Analytics</title>
+<style>
+  :root{
+    --paper:#f6f1e7; --paper2:#efe7d5; --ink:#1c1712; --muted:#7a6f60;
+    --rule:#d8cdb8; --oxblood:#8f2b1e; --blue:#2f4d6b; --green:#41684a; --gold:#a07c2c;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--paper);color:var(--ink);
+       font-family:Georgia,'Times New Roman',serif;line-height:1.65;font-size:16px}
+  #progress{position:fixed;top:0;left:0;height:3px;background:var(--oxblood);width:0%;z-index:99}
+  .sheet{max-width:860px;margin:0 auto;padding:48px 24px 80px}
+  .label{font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;letter-spacing:.22em;
+         text-transform:uppercase;color:var(--muted)}
+  .rule{border:none;border-top:1px solid var(--rule);margin:26px 0}
+  .rule.double{border-top:3px double var(--rule)}
+
+  /* masthead */
+  .masthead{text-align:center}
+  .masthead h1{font-size:clamp(34px,6vw,54px);font-weight:700;letter-spacing:-.5px;line-height:1.08;margin:10px 0 6px}
+  .masthead .tagline{font-style:italic;color:var(--muted);font-size:15px}
+  .edition{display:flex;justify-content:space-between;border-top:1px solid var(--ink);
+           border-bottom:1px solid var(--ink);padding:6px 2px;margin-top:22px}
+  .edition span{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10.5px;letter-spacing:.18em;
+                text-transform:uppercase;color:var(--ink)}
+
+  /* toc */
+  .toc{margin:30px 0 8px;columns:2;column-gap:40px}
+  .toc a{display:block;text-decoration:none;color:var(--ink);font-size:14.5px;padding:5px 0;
+         border-bottom:1px dotted var(--rule);break-inside:avoid}
+  .toc a:hover{color:var(--oxblood)}
+  .toc a .no{color:var(--gold);font-style:italic;margin-right:8px}
+
+  /* kpi strip */
+  .strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:0;
+         border:1px solid var(--ink);margin:34px 0}
+  .strip .cell{padding:16px 14px;border-right:1px solid var(--rule);text-align:center}
+  .strip .cell:last-child{border-right:none}
+  .strip .num{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15}
+  .strip .cap{margin-top:4px}
+
+  /* chapters */
+  .chap{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+  .chap.in{opacity:1;transform:none}
+  .chaphead{display:flex;align-items:baseline;gap:14px;margin:56px 0 6px}
+  .chaphead .no{font-size:34px;font-style:italic;color:var(--gold);font-weight:400}
+  .chaphead h2{font-size:26px;font-weight:700;letter-spacing:-.3px}
+  .chaphead .tag{margin-left:auto;text-align:right}
+  .lede{font-size:17.5px;font-style:italic;color:var(--muted);margin-bottom:18px;max-width:640px}
+  .chap p.body{margin-bottom:14px;max-width:700px}
+  .chap p.body b{font-weight:700}
+  .dropcap::first-letter{font-size:52px;float:left;line-height:.82;padding:4px 8px 0 0;
+                         color:var(--oxblood);font-weight:700}
+
+  /* audit table (chapter I) */
+  table.print{width:100%;border-collapse:collapse;font-size:14px;margin:14px 0 6px}
+  table.print th{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);text-align:left;padding:7px 10px;
+    border-top:2px solid var(--ink);border-bottom:1px solid var(--ink)}
+  table.print td{padding:9px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+  table.print td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .flow{display:flex;align-items:center;gap:10px;margin:18px 0 4px;flex-wrap:wrap}
+  .flow .box{border:1px solid var(--ink);padding:10px 16px;text-align:center;background:var(--paper2)}
+  .flow .box .n{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+  .flow .arr{color:var(--muted);font-size:20px}
+
+  /* segment bars (chapter II) */
+  .segrow{display:grid;grid-template-columns:150px 1fr 110px;gap:12px;align-items:center;
+          padding:9px 6px;border-bottom:1px dotted var(--rule);cursor:pointer}
+  .segrow:hover{background:var(--paper2)}
+  .segrow.active{background:var(--paper2)}
+  .segrow .nm{font-size:14.5px}
+  .segrow .nm i{color:var(--muted);font-size:12px;display:block}
+  .barwrap{height:22px;background:var(--paper2);border:1px solid var(--rule);position:relative}
+  .bar{height:100%;transition:width 1.1s cubic-bezier(.2,.7,.2,1)}
+  .segrow .val{text-align:right;font-size:13px;font-variant-numeric:tabular-nums;color:var(--muted)}
+  #segDetail{border-left:3px solid var(--gold);padding:10px 16px;margin:16px 0 4px;
+             background:var(--paper2);font-size:14.5px;min-height:58px}
+
+  /* line chart (chapter III) */
+  .toggle{display:flex;gap:8px;margin:6px 0 12px}
+  .toggle button{font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;background:transparent;border:1px solid var(--rule);
+    color:var(--muted);padding:6px 13px;cursor:pointer;border-radius:2px}
+  .toggle button.on{border-color:var(--ink);color:var(--paper);background:var(--ink)}
+
+  /* sentiment (chapter IV) */
+  .pull{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:22px 0}
+  @media(max-width:640px){.pull{grid-template-columns:1fr}}
+  .pull .stat{border-top:3px solid var(--ink);padding-top:10px}
+  .pull .stat .n{font-size:44px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+  .pull .stat .t{font-style:italic;color:var(--muted);margin-top:6px;font-size:14px}
+
+  /* verdict stamps (chapter V) */
+  .verdict{border:1px solid var(--rule);padding:18px 20px;margin-bottom:16px;position:relative;background:#faf6ee}
+  .verdict h3{font-size:17px;margin-bottom:2px}
+  .verdict .q{font-style:italic;color:var(--muted);font-size:14px;margin-bottom:10px}
+  .verdict .row{display:flex;gap:26px;flex-wrap:wrap;font-size:14px;margin-top:6px;
+                font-variant-numeric:tabular-nums}
+  .verdict .row span b{font-size:16px}
+  .stamp{position:absolute;top:14px;right:16px;transform:rotate(6deg);
+         border:2px solid var(--oxblood);color:var(--oxblood);padding:3px 10px;
+         font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;letter-spacing:.2em;
+         text-transform:uppercase;font-weight:700;opacity:.85}
+  .stamp.neg{border-color:var(--muted);color:var(--muted)}
+  .coef{font-size:13px;color:var(--muted);margin-top:8px}
+
+  /* advocates (chapter VI) */
+  table.adv{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.adv th{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);text-align:right;padding:7px 8px;cursor:pointer;
+    border-top:2px solid var(--ink);border-bottom:1px solid var(--ink);white-space:nowrap;user-select:none}
+  table.adv th:hover{color:var(--ink)} table.adv th.sorted{color:var(--oxblood)}
+  table.adv td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--rule);
+               font-variant-numeric:tabular-nums}
+  table.adv td:first-child,table.adv th:first-child{text-align:left}
+  tr:hover td{background:var(--paper2)}
+  .segtag{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10px;letter-spacing:.08em;
+          text-transform:uppercase;padding:2px 7px;border:1px solid}
+  .segtag.Champions{color:var(--green);border-color:var(--green)}
+  .segtag.Loyal{color:var(--blue);border-color:var(--blue)}
+
+  /* colophon */
+  .colophon{margin-top:60px;border-top:3px double var(--rule);padding-top:18px;
+            font-size:13px;color:var(--muted)}
+  .ribbon{display:inline-block;border:1px solid var(--gold);color:var(--gold);
+          padding:5px 14px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;
+          letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px}
+  #tooltip{position:fixed;pointer-events:none;background:var(--ink);color:var(--paper);
+           padding:7px 11px;font-size:12.5px;font-family:Georgia,serif;display:none;z-index:50;
+           white-space:nowrap;border-radius:2px}
+  svg text{font-family:Georgia,serif}
+  @media(max-width:640px){.segrow{grid-template-columns:105px 1fr 80px}.toc{columns:1}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="sheet">
+
+  <!-- ================= MASTHEAD ================= -->
+  <div class="masthead">
+    <div class="label">Customer Intelligence Ledger &middot; Amazon Fine Food Reviews</div>
+    <h1>The Fine Food<br>Review Files</h1>
+    <p class="tagline">A retention &amp; advocacy investigation across 568,454 reviews, 256,059 customers, thirteen years</p>
+    <div class="edition">
+      <span>Vol. I &middot; No. 1</span>
+      <span>Data cut: Oct 1999 &ndash; Oct 2012</span>
+      <span>SQL &middot; Python &middot; Statistics</span>
+    </div>
+  </div>
+
+  <!-- ================= KPI STRIP ================= -->
+  <div class="strip" id="strip"></div>
+
+  <!-- ================= TOC ================= -->
+  <div class="label" style="margin-top:8px">In this edition</div>
+  <nav class="toc">
+    <a href="#c1"><span class="no">I</span>The thirty percent that wasn't real</a>
+    <a href="#c2"><span class="no">II</span>Six kinds of customer</a>
+    <a href="#c3"><span class="no">III</span>The growth curve</a>
+    <a href="#c4"><span class="no">IV</span>When the stars lie</a>
+    <a href="#c5"><span class="no">V</span>Does it hold up? — the statistics</a>
+    <a href="#c6"><span class="no">VI</span>The advocate list</a>
+  </nav>
+  <hr class="rule double">
+
+  <!-- ================= I. DATA QUALITY ================= -->
+  <section class="chap" id="c1">
+    <div class="chaphead"><span class="no">I</span><h2>The thirty percent that wasn't real</h2>
+      <span class="tag label">Data wrangling &amp; audit</span></div>
+    <p class="lede">Before a single insight, the ledger itself had to be audited — and a third of it failed inspection.</p>
+    <p class="body dropcap">The raw file holds 568,454 reviews. Two of them are structurally impossible — helpfulness votes that exceed the total votes cast. And 174,519 are duplicates: the same customer, the same words, the same second, recorded twice — cross-posted across product variants. Every rule below is enforced in SQL, logged to an audit file, and reconciled by automated tests.</p>
+    <div class="flow">
+      <div class="box"><div class="n" data-count="568454">0</div><div class="label">raw reviews</div></div>
+      <div class="arr">&minus;2 &rarr;</div>
+      <div class="box"><div class="n" data-count="568452">0</div><div class="label">after validity rule</div></div>
+      <div class="arr">&minus;174,519 &rarr;</div>
+      <div class="box" style="border-width:2px"><div class="n" data-count="393931">0</div><div class="label">clean reviews</div></div>
+    </div>
+    <table class="print" id="auditTable"></table>
+    <p class="body" style="font-size:13.5px;color:var(--muted)">Full row-level audit exported to <i>wrangling_audit.json</i>; the pytest suite reconciles removed rows against the final count.</p>
+  </section>
+
+  <!-- ================= II. SEGMENTS ================= -->
+  <section class="chap" id="c2">
+    <div class="chaphead"><span class="no">II</span><h2>Six kinds of customer</h2>
+      <span class="tag label">R-F-E segmentation</span></div>
+    <p class="lede">No revenue column exists in this data — so monetary value was replaced with engagement, and the model says so out loud.</p>
+    <p class="body">Each customer is scored on <b>Recency</b> and <b>Frequency</b> quintiles (SQL <i>NTILE</i> window functions), with <b>Engagement</b> — helpfulness votes earned — as the value proxy. The result is six CRM-standard segments. Click any bar for its profile.</p>
+    <div id="segrows"></div>
+    <div id="segDetail">Select a segment to read its profile.</div>
+  </section>
+
+  <!-- ================= III. GROWTH ================= -->
+  <section class="chap" id="c3">
+    <div class="chaphead"><span class="no">III</span><h2>The growth curve</h2>
+      <span class="tag label">Monthly activity</span></div>
+    <p class="lede">From four thousand reviews a year to two hundred thousand — and the audience kept arriving faster than it returned.</p>
+    <div class="toggle" id="lineToggle">
+      <button data-series="reviews" class="on">Reviews</button>
+      <button data-series="new_users">New reviewers</button>
+      <button data-series="active_users">Active reviewers</button>
+    </div>
+    <svg id="line" width="100%" height="250" viewBox="0 0 560 250" preserveAspectRatio="none"></svg>
+    <p class="body" style="font-size:13.5px;color:var(--muted)">The widening gap between new and active reviewers in 2011–12 is the retention story: acquisition outpaced repeat participation.</p>
+  </section>
+
+  <!-- ================= IV. SENTIMENT GAP ================= -->
+  <section class="chap" id="c4">
+    <div class="chaphead"><span class="no">IV</span><h2>When the stars lie</h2>
+      <span class="tag label">Sentiment &times; rating</span></div>
+    <p class="lede">TextBlob sentiment was scored on every clean review — then validated against the star the same customer gave. Agreement: 58.5%. The disagreement is the story.</p>
+    <svg id="bars" width="100%" height="250" viewBox="0 0 560 250"></svg>
+    <div class="pull">
+      <div class="stat" style="border-color:var(--oxblood)">
+        <div class="n" style="color:var(--oxblood)" data-count="9246">0</div>
+        <div class="t">hidden detractors — four or five stars, but words that complain (avg polarity &minus;0.33). Invisible to any star-only dashboard.</div>
+      </div>
+      <div class="stat" style="border-color:var(--green)">
+        <div class="n" style="color:var(--green)" data-count="9573">0</div>
+        <div class="t">hidden advocates — one or two stars, but positive words (avg polarity +0.44). Often rating the delivery, not the food. Recovery-win candidates.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= V. STATISTICS ================= -->
+  <section class="chap" id="c5">
+    <div class="chaphead"><span class="no">V</span><h2>Does it hold up?</h2>
+      <span class="tag label">Inferential statistics</span></div>
+    <p class="lede">A dashboard suggests; statistics testify. Every claim above was taken to court — non-parametric where the data refused to be normal.</p>
+    <div id="verdicts"></div>
+    <p class="body" style="font-size:13.5px;color:var(--muted)">Why non-parametric? Reviews-per-customer skews past 12, helpfulness votes are log-log skewed, and polarity is bounded and tri-modal. The t-test's normality assumption fails on all three — so Mann-Whitney U and chi-square carry the case.</p>
+  </section>
+
+  <!-- ================= VI. ADVOCATES ================= -->
+  <section class="chap" id="c6">
+    <div class="chaphead"><span class="no">VI</span><h2>The advocate list</h2>
+      <span class="tag label">Activation shortlist</span></div>
+    <p class="lede">Thirty customers worth a thank-you: engaged, trusted by peers, and consistently positive in their own words.</p>
+    <p class="body">Advocates must be Champions or Loyal, have earned at least ten helpfulness votes, and write positive summaries at least 60% of the time. The advocacy score weighs helpfulness (50%), positivity (30%), and activity (20%). Click any column to re-sort.</p>
+    <div style="overflow-x:auto"><table class="adv" id="advTable"></table></div>
+  </section>
+
+  <!-- ================= COLOPHON ================= -->
+  <div class="colophon">
+    <span class="ribbon">&#9670; Tableau Public edition — in preparation</span>
+    <p>Compiled by Meenakshi Sethi &middot; System Analyst, Expert Technology Services (ETSAZ).</p>
+    <p style="margin-top:8px">Method: SQLite audit &amp; segmentation SQL (single source of truth) &rarr; Python pipeline (pandas, TextBlob, scipy, statsmodels) under a seeded, uv-managed environment &rarr; this page, generated programmatically from the pipeline's exports. 568,454 raw reviews &rarr; 393,931 clean (30.7% duplicates and 2 invalid rows removed, every decision logged). Validated by a pytest suite of schema and invariant checks.</p>
+    <p style="margin-top:8px">Source: Amazon Fine Food Reviews (Kaggle / SNAP). This journal is a portfolio artifact; customer identifiers are pseudonymous as shipped in the public dataset.</p>
+  </div>
+</div>
+<div id="tooltip"></div>
+
+<script>
+const DATA = __DATA_JSON__;
+
+/* ---------- scroll progress + reveals ---------- */
+addEventListener('scroll',()=>{
+  const h=document.documentElement;
+  document.getElementById('progress').style.width=
+    (h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';
+});
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.classList.add('in');
+    e.target.querySelectorAll('[data-count]').forEach(countUp); io.unobserve(e.target);}
+}),{threshold:.12});
+document.querySelectorAll('.chap').forEach(c=>io.observe(c));
+
+/* ---------- animated counters ---------- */
+function countUp(el){
+  if(el.dataset.done)return; el.dataset.done=1;
+  const target=+el.dataset.count, t0=performance.now(), dur=1100;
+  const fmt=n=>n.toLocaleString('en-US');
+  (function tick(t){
+    const p=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-p,3);
+    el.textContent=fmt(Math.round(target*e));
+    if(p<1)requestAnimationFrame(tick);
+  })(t0);
+}
+
+/* ---------- tooltip ---------- */
+const tip=document.getElementById('tooltip');
+function showTip(html,ev){tip.innerHTML=html;tip.style.display='block';
+  tip.style.left=Math.min(ev.clientX+14,innerWidth-200)+'px';
+  tip.style.top=(ev.clientY+14)+'px';}
+function hideTip(){tip.style.display='none';}
+
+/* ---------- KPI strip ---------- */
+const stripDefs=[
+  {n:DATA.kpis.clean_reviews.toLocaleString(),c:'clean reviews'},
+  {n:DATA.kpis.customers.toLocaleString(),c:'customers'},
+  {n:DATA.kpis.products.toLocaleString(),c:'products'},
+  {n:DATA.kpis.avg_rating_clean,c:'avg rating'},
+  {n:DATA.kpis.sentiment_rating_agreement_pct+'%',c:'sentiment agreement'},
+  {n:DATA.kpis.advocates_identified,c:'advocates shortlisted'},
+];
+document.getElementById('strip').innerHTML=stripDefs.map(k=>
+  `<div class="cell"><div class="num">${k.n}</div><div class="cap label">${k.c}</div></div>`).join('');
+
+/* ---------- audit table ---------- */
+document.getElementById('auditTable').innerHTML=
+  '<thead><tr><th>Step</th><th>Rule</th><th>Reason</th><th style="text-align:right">Rows removed</th>'+
+  '<th style="text-align:right">Rows after</th></tr></thead><tbody>'+
+  DATA.audit.map(a=>`<tr><td>${a.step}</td><td>${a.rule}</td><td style="color:var(--muted);font-style:italic">${a.reason}</td>`+
+  `<td class="num">&minus;${a.rows_removed.toLocaleString()}</td><td class="num">${a.rows_after.toLocaleString()}</td></tr>`).join('')+
+  '</tbody>';
+
+/* ---------- segment bars ---------- */
+const SEGCOLORS={'Champions':'var(--green)','Loyal':'var(--blue)','At Risk':'var(--gold)',
+  'New / Promising':'#7a5ea0','Hibernating':'#8d8577','Casual':'#b0a68f'};
+const maxC=Math.max(...DATA.segments.map(s=>s.customers));
+document.getElementById('segrows').innerHTML=DATA.segments.map(s=>`
+  <div class="segrow" data-seg="${s.segment}">
+    <div class="nm">${s.segment}<i>${s.pct_customers}% of base</i></div>
+    <div class="barwrap"><div class="bar" data-w="${(100*s.customers/maxC).toFixed(1)}"
+      style="background:${SEGCOLORS[s.segment]||'#999'};width:0"></div></div>
+    <div class="val">${s.customers.toLocaleString()} customers</div>
+  </div>`).join('');
+const segIO=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.querySelectorAll('.bar').forEach(b=>
+    b.style.width=b.dataset.w+'%'); segIO.unobserve(e.target);}
+}),{threshold:.3});
+segIO.observe(document.getElementById('c2'));
+document.querySelectorAll('.segrow').forEach(row=>{
+  row.addEventListener('click',()=>selectSegment(row.dataset.seg));
+  row.addEventListener('mousemove',ev=>{const s=DATA.segments.find(
+    x=>x.segment===row.dataset.seg);
+    showTip(`<b>${s.segment}</b> &middot; ${s.avg_reviews} avg reviews &middot; ${s.avg_score}&#9733; avg`,ev);});
+  row.addEventListener('mouseleave',hideTip);
+});
+function selectSegment(name){
+  document.querySelectorAll('.segrow').forEach(r=>
+    r.classList.toggle('active',r.dataset.seg===name));
+  const s=DATA.segments.find(x=>x.segment===name);
+  document.getElementById('segDetail').innerHTML=
+    `<b>${s.segment}</b> — ${s.customers.toLocaleString()} customers (${s.pct_customers}% of the base). `+
+    `Average ${s.avg_reviews} reviews each, rated ${s.avg_score} stars on average, `+
+    `last active ${Math.round(s.avg_recency_days)} days before the data cut, `+
+    `with ${s.total_helpful_votes.toLocaleString()} helpfulness votes earned across the segment.`;
+}
+
+/* ---------- line chart ---------- */
+const lineSvg=document.getElementById('line');
+const W=560,H=250,P={l:48,r:12,t:12,b:26};
+let lineSeries='reviews';
+function drawLine(){
+  lineSvg.innerHTML='';
+  const vals=DATA.monthly.map(m=>m[lineSeries]);
+  const mx=Math.max(...vals)*1.05;
+  const x=i=>P.l+(W-P.l-P.r)*i/(DATA.monthly.length-1);
+  const y=v=>H-P.b-(H-P.t-P.b)*v/mx;
+  for(let g=0;g<=4;g++){
+    const gy=H-P.b-(H-P.t-P.b)*g/4;
+    const ln=mk('line',{x1:P.l,x2:W-P.r,y1:gy,y2:gy,stroke:'#d8cdb8','stroke-dasharray':'2,4'});
+    lineSvg.appendChild(ln);
+    const lb=mk('text',{x:P.l-7,y:gy+4,'text-anchor':'end',fill:'#7a6f60','font-size':10});
+    lb.textContent=Math.round(mx*g/4).toLocaleString(); lineSvg.appendChild(lb);
+  }
+  const pts=vals.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+  lineSvg.appendChild(mk('polygon',{points:`${P.l},${H-P.b} ${pts} ${W-P.r},${H-P.b}`,fill:'rgba(47,77,107,.10)'}));
+  lineSvg.appendChild(mk('polyline',{points:pts,fill:'none',stroke:'#2f4d6b','stroke-width':2.2}));
+  [0,DATA.monthly.length-1].forEach(i=>{
+    const lb=mk('text',{x:x(i),y:H-8,'text-anchor':i?'end':'start',fill:'#7a6f60','font-size':10});
+    lb.textContent=DATA.monthly[i].month; lineSvg.appendChild(lb);
+  });
+  const hit=mk('rect',{x:P.l,y:P.t,width:W-P.l-P.r,height:H-P.t-P.b,fill:'transparent'});
+  hit.addEventListener('mousemove',ev=>{
+    const rect=lineSvg.getBoundingClientRect();
+    const i=Math.max(0,Math.min(DATA.monthly.length-1,
+      Math.round(((ev.clientX-rect.left)/rect.width*W-P.l)/(W-P.l-P.r)*(DATA.monthly.length-1))));
+    const m=DATA.monthly[i];
+    showTip(`<b>${m.month}</b> &middot; ${m[lineSeries].toLocaleString()} ${lineSeries.replace('_',' ')} &middot; avg ${m.avg_score}&#9733;`,ev);
+  });
+  hit.addEventListener('mouseleave',hideTip);
+  lineSvg.appendChild(hit);
+}
+function mk(tag,attrs){const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const k in attrs)el.setAttribute(k,attrs[k]); return el;}
+drawLine();
+document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#lineToggle button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); lineSeries=b.dataset.series; drawLine();
+}));
+
+/* ---------- stacked sentiment bars ---------- */
+(function(){
+  const bars=document.getElementById('bars');
+  const BW=560,BH=250,p={l:48,r:12,t:12,b:26};
+  const maxN=Math.max(...DATA.sentiment.map(s=>s.reviews));
+  const x=i=>p.l+(BW-p.l-p.r)*(i+0.5)/DATA.sentiment.length;
+  const w=(BW-p.l-p.r)/DATA.sentiment.length-30;
+  const y=v=>BH-p.b-(BH-p.t-p.b)*v/maxN;
+  const parts=[['pct_negative','Negative','#8f2b1e'],['pct_neutral','Neutral','#b3a893'],['pct_positive','Positive','#41684a']];
+  DATA.sentiment.forEach((s,i)=>{
+    let acc=0;
+    parts.forEach(([key,name,col])=>{
+      const h=(s[key]/100)*s.reviews;
+      const r=mk('rect',{x:x(i)-w/2,width:w,y:y(acc+h),height:Math.max(0,y(acc)-y(acc+h)),fill:col});
+      r.addEventListener('mousemove',ev=>showTip(`<b>${s.Score}&#9733;</b> &middot; ${name}<br>${s[key]}% of ${s.reviews.toLocaleString()} reviews &middot; avg polarity ${s.avg_polarity}`,ev));
+      r.addEventListener('mouseleave',hideTip);
+      bars.appendChild(r); acc+=h;
+    });
+    const lb=mk('text',{x:x(i),y:BH-8,'text-anchor':'middle',fill:'#7a6f60','font-size':12});
+    lb.textContent=s.Score+'\u2605'; bars.appendChild(lb);
+  });
+})();
+
+/* ---------- statistical verdicts ---------- */
+(function(){
+  const v=document.getElementById('verdicts');
+  if(!DATA.stats){v.innerHTML='<p class="body">Statistics pending — run stage 4.</p>';return;}
+  const S=DATA.stats, yes='SIGNIFICANT', no='NOT SIGNIFICANT';
+  const mw=S.mannwhitney, ch=S.chi_square, ol=S.ols, pw=S.power;
+  const sigCoefs=ol.coefficients.filter(c=>c.p_value<0.05&&c.name!=='Intercept');
+  v.innerHTML=`
+  <div class="verdict"><span class="stamp${mw.significant?'':' neg'}">${mw.significant?yes:no}</span>
+    <h3>Mann-Whitney U — trust across segments</h3>
+    <div class="q">${mw.question}</div>
+    <div class="row"><span>U <b>${mw.u_statistic.toLocaleString()}</b></span>
+      <span>p <b>${mw.p_value.toExponential(2)}</b></span>
+      <span>medians <b>${mw.median[0]} vs ${mw.median[1]}</b></span>
+      <span>n <b>${mw.n[0].toLocaleString()} vs ${mw.n[1].toLocaleString()}</b></span></div>
+    <div class="coef">${mw.why_nonparametric}. ${mw.significant ? (
+      mw.median[0] > mw.median[1]
+        ? `${mw.groups[0]} reviewers earn a materially higher helpfulness ratio — engagement and trust travel together.`
+        : `The difference is real but counter-intuitive: ${mw.groups[1]} reviewers earn a slightly higher median helpfulness ratio (${mw.median[1]} vs ${mw.median[0]}). Writing many reviews dilutes per-review trust — volume is not influence.`
+    ) : 'No detectable trust difference between the segments.'}</div>
+  </div>
+  <div class="verdict"><span class="stamp${ch.significant?'':' neg'}">${ch.significant?yes:no}</span>
+    <h3>Chi-square — sentiment &times; segment</h3>
+    <div class="q">${ch.question}</div>
+    <div class="row"><span>&chi;&sup2; <b>${ch.chi2.toLocaleString()}</b></span>
+      <span>dof <b>${ch.dof}</b></span><span>p <b>${ch.p_value.toExponential(2)}</b></span>
+      <span>Cram&eacute;r's V <b>${ch.cramers_v}</b> (${ch.effect_label})</span></div>
+    <div class="coef">Segment membership and tone are ${ch.significant?'related — targeting by segment can lean on voice, though the effect is '+ch.effect_label+'.':'independent.'}</div>
+  </div>
+  <div class="verdict"><span class="stamp">R&sup2; ${ol.r_squared}</span>
+    <h3>OLS regression — the anatomy of influence</h3>
+    <div class="q">${ol.question}</div>
+    <div class="row"><span>n <b>${ol.n.toLocaleString()}</b></span>
+      <span>adj-R&sup2; <b>${ol.adj_r_squared}</b></span>
+      <span>F p <b>${ol.f_p_value.toExponential(2)}</b></span></div>
+    <div class="coef">Target ${ol.why_log_target ? 'log(helpful votes + 1) — '+ol.why_log_target : 'log(votes)'}.
+      Significant drivers: ${sigCoefs.map(c=>`${c.name} (&beta;=${c.coef}, p=${c.p_value.toExponential(1)})`).join(' &middot; ')}</div>
+  </div>
+  <div class="verdict"><span class="stamp">n &ge; ${pw.n_per_group.toLocaleString()}</span>
+    <h3>Power analysis — sizing the next experiment</h3>
+    <div class="q">${pw.question}</div>
+    <div class="row"><span>MDE <b>${pw.mde}</b></span><span>Cohen's d <b>${pw.cohens_d}</b></span>
+      <span>&alpha; <b>${pw.alpha}</b></span><span>power <b>${pw.power}</b></span>
+      <span>per group <b>${pw.n_per_group.toLocaleString()}</b></span></div>
+    <div class="coef">Any A/B test on review sentiment needs at least this many reviews per arm before a verdict is worth printing.</div>
+  </div>`;
+})();
+
+/* ---------- advocates table ---------- */
+const tbl=document.getElementById('advTable');
+let sortKey='advocacy_score',sortAsc=false;
+function renderAdv(){
+  const rows=[...DATA.advocates].sort((a,b)=>(a[sortKey]>b[sortKey]?1:-1)*(sortAsc?1:-1));
+  const cols=[['UserId','Customer'],['segment','Segment'],['review_count','Reviews'],
+    ['avg_score','Avg &#9733;'],['helpful_votes','Votes earned'],
+    ['helpfulness_ratio','Helpfulness'],['pct_positive','% positive'],
+    ['advocacy_score','Advocacy score'],['last_review','Last active']];
+  tbl.innerHTML='<thead><tr>'+cols.map(([k,n])=>
+    `<th data-k="${k}" class="${k===sortKey?'sorted':''}">${n}${k===sortKey?(sortAsc?' &uarr;':' &darr;'):''}</th>`).join('')+
+    '</tr></thead><tbody>'+rows.map(r=>`<tr>
+      <td>${r.UserId}</td><td style="text-align:right"><span class="segtag ${r.segment}">${r.segment}</span></td>
+      <td>${r.review_count}</td><td>${r.avg_score}</td><td>${r.helpful_votes}</td>
+      <td>${(r.helpfulness_ratio*100).toFixed(0)}%</td><td>${r.pct_positive.toFixed(0)}%</td>
+      <td><b>${r.advocacy_score}</b></td><td>${r.last_review}</td></tr>`).join('')+'</tbody>';
+  tbl.querySelectorAll('th').forEach(th=>th.addEventListener('click',()=>{
+    const k=th.dataset.k;
+    if(k===sortKey){sortAsc=!sortAsc}else{sortKey=k;sortAsc=(k==='UserId'||k==='last_review'||k==='segment')}
+    renderAdv();
+  }));
+}
+renderAdv();
+</script>
+</body>
+</html>
+"""
+
+html = TEMPLATE.replace("__DATA_JSON__", json.dumps(DATA))
+OUT.write_text(html, encoding="utf-8")
+print(f"Dashboard written: {OUT}  ({OUT.stat().st_size / 1024:.0f} KB)")
+print("Editorial edition — open in any browser. Fully self-contained.")

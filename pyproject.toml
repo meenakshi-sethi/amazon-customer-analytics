@@ -1,0 +1,19 @@
+[project]
+name = "amazon-customer-analytics"
+version = "1.1.0"
+description = "Customer analytics on 568K Amazon fine-food reviews: RF-E segmentation, retention decay, validated sentiment analysis, inferential statistics, and advocate identification."
+requires-python = ">=3.10"
+dependencies = [
+    "pandas>=2.2",
+    "numpy>=1.26",
+    "matplotlib>=3.8",
+    "textblob>=0.18",
+    "scipy>=1.11",
+    "statsmodels>=0.14",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[tool.uv]
+package = false

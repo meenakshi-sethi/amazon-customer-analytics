@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Fine Food Review Files — Amazon Customer Analytics</title>
+<style>
+  :root{
+    --paper:#f6f1e7; --paper2:#efe7d5; --ink:#1c1712; --muted:#7a6f60;
+    --rule:#d8cdb8; --oxblood:#8f2b1e; --blue:#2f4d6b; --green:#41684a; --gold:#a07c2c;
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{background:var(--paper);color:var(--ink);
+       font-family:Georgia,'Times New Roman',serif;line-height:1.65;font-size:16px}
+  #progress{position:fixed;top:0;left:0;height:3px;background:var(--oxblood);width:0%;z-index:99}
+  .sheet{max-width:860px;margin:0 auto;padding:48px 24px 80px}
+  .label{font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;letter-spacing:.22em;
+         text-transform:uppercase;color:var(--muted)}
+  .rule{border:none;border-top:1px solid var(--rule);margin:26px 0}
+  .rule.double{border-top:3px double var(--rule)}
+
+  /* masthead */
+  .masthead{text-align:center}
+  .masthead h1{font-size:clamp(34px,6vw,54px);font-weight:700;letter-spacing:-.5px;line-height:1.08;margin:10px 0 6px}
+  .masthead .tagline{font-style:italic;color:var(--muted);font-size:15px}
+  .edition{display:flex;justify-content:space-between;border-top:1px solid var(--ink);
+           border-bottom:1px solid var(--ink);padding:6px 2px;margin-top:22px}
+  .edition span{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10.5px;letter-spacing:.18em;
+                text-transform:uppercase;color:var(--ink)}
+
+  /* toc */
+  .toc{margin:30px 0 8px;columns:2;column-gap:40px}
+  .toc a{display:block;text-decoration:none;color:var(--ink);font-size:14.5px;padding:5px 0;
+         border-bottom:1px dotted var(--rule);break-inside:avoid}
+  .toc a:hover{color:var(--oxblood)}
+  .toc a .no{color:var(--gold);font-style:italic;margin-right:8px}
+
+  /* kpi strip */
+  .strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:0;
+         border:1px solid var(--ink);margin:34px 0}
+  .strip .cell{padding:16px 14px;border-right:1px solid var(--rule);text-align:center}
+  .strip .cell:last-child{border-right:none}
+  .strip .num{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15}
+  .strip .cap{margin-top:4px}
+
+  /* chapters */
+  .chap{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+  .chap.in{opacity:1;transform:none}
+  .chaphead{display:flex;align-items:baseline;gap:14px;margin:56px 0 6px}
+  .chaphead .no{font-size:34px;font-style:italic;color:var(--gold);font-weight:400}
+  .chaphead h2{font-size:26px;font-weight:700;letter-spacing:-.3px}
+  .chaphead .tag{margin-left:auto;text-align:right}
+  .lede{font-size:17.5px;font-style:italic;color:var(--muted);margin-bottom:18px;max-width:640px}
+  .chap p.body{margin-bottom:14px;max-width:700px}
+  .chap p.body b{font-weight:700}
+  .dropcap::first-letter{font-size:52px;float:left;line-height:.82;padding:4px 8px 0 0;
+                         color:var(--oxblood);font-weight:700}
+
+  /* audit table (chapter I) */
+  table.print{width:100%;border-collapse:collapse;font-size:14px;margin:14px 0 6px}
+  table.print th{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);text-align:left;padding:7px 10px;
+    border-top:2px solid var(--ink);border-bottom:1px solid var(--ink)}
+  table.print td{padding:9px 10px;border-bottom:1px solid var(--rule);vertical-align:top}
+  table.print td.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .flow{display:flex;align-items:center;gap:10px;margin:18px 0 4px;flex-wrap:wrap}
+  .flow .box{border:1px solid var(--ink);padding:10px 16px;text-align:center;background:var(--paper2)}
+  .flow .box .n{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+  .flow .arr{color:var(--muted);font-size:20px}
+
+  /* segment bars (chapter II) */
+  .segrow{display:grid;grid-template-columns:150px 1fr 110px;gap:12px;align-items:center;
+          padding:9px 6px;border-bottom:1px dotted var(--rule);cursor:pointer}
+  .segrow:hover{background:var(--paper2)}
+  .segrow.active{background:var(--paper2)}
+  .segrow .nm{font-size:14.5px}
+  .segrow .nm i{color:var(--muted);font-size:12px;display:block}
+  .barwrap{height:22px;background:var(--paper2);border:1px solid var(--rule);position:relative}
+  .bar{height:100%;transition:width 1.1s cubic-bezier(.2,.7,.2,1)}
+  .segrow .val{text-align:right;font-size:13px;font-variant-numeric:tabular-nums;color:var(--muted)}
+  #segDetail{border-left:3px solid var(--gold);padding:10px 16px;margin:16px 0 4px;
+             background:var(--paper2);font-size:14.5px;min-height:58px}
+
+  /* line chart (chapter III) */
+  .toggle{display:flex;gap:8px;margin:6px 0 12px}
+  .toggle button{font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;letter-spacing:.1em;
+    text-transform:uppercase;background:transparent;border:1px solid var(--rule);
+    color:var(--muted);padding:6px 13px;cursor:pointer;border-radius:2px}
+  .toggle button.on{border-color:var(--ink);color:var(--paper);background:var(--ink)}
+
+  /* sentiment (chapter IV) */
+  .pull{display:grid;grid-template-columns:1fr 1fr;gap:22px;margin:22px 0}
+  @media(max-width:640px){.pull{grid-template-columns:1fr}}
+  .pull .stat{border-top:3px solid var(--ink);padding-top:10px}
+  .pull .stat .n{font-size:44px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+  .pull .stat .t{font-style:italic;color:var(--muted);margin-top:6px;font-size:14px}
+
+  /* verdict stamps (chapter V) */
+  .verdict{border:1px solid var(--rule);padding:18px 20px;margin-bottom:16px;position:relative;background:#faf6ee}
+  .verdict h3{font-size:17px;margin-bottom:2px}
+  .verdict .q{font-style:italic;color:var(--muted);font-size:14px;margin-bottom:10px}
+  .verdict .row{display:flex;gap:26px;flex-wrap:wrap;font-size:14px;margin-top:6px;
+                font-variant-numeric:tabular-nums}
+  .verdict .row span b{font-size:16px}
+  .stamp{position:absolute;top:14px;right:16px;transform:rotate(6deg);
+         border:2px solid var(--oxblood);color:var(--oxblood);padding:3px 10px;
+         font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;letter-spacing:.2em;
+         text-transform:uppercase;font-weight:700;opacity:.85}
+  .stamp.neg{border-color:var(--muted);color:var(--muted)}
+  .coef{font-size:13px;color:var(--muted);margin-top:8px}
+
+  /* advocates (chapter VI) */
+  table.adv{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.adv th{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--muted);text-align:right;padding:7px 8px;cursor:pointer;
+    border-top:2px solid var(--ink);border-bottom:1px solid var(--ink);white-space:nowrap;user-select:none}
+  table.adv th:hover{color:var(--ink)} table.adv th.sorted{color:var(--oxblood)}
+  table.adv td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--rule);
+               font-variant-numeric:tabular-nums}
+  table.adv td:first-child,table.adv th:first-child{text-align:left}
+  tr:hover td{background:var(--paper2)}
+  .segtag{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10px;letter-spacing:.08em;
+          text-transform:uppercase;padding:2px 7px;border:1px solid}
+  .segtag.Champions{color:var(--green);border-color:var(--green)}
+  .segtag.Loyal{color:var(--blue);border-color:var(--blue)}
+
+  /* colophon */
+  .colophon{margin-top:60px;border-top:3px double var(--rule);padding-top:18px;
+            font-size:13px;color:var(--muted)}
+  .ribbon{display:inline-block;border:1px solid var(--gold);color:var(--gold);
+          padding:5px 14px;font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;
+          letter-spacing:.18em;text-transform:uppercase;margin-bottom:14px}
+  #tooltip{position:fixed;pointer-events:none;background:var(--ink);color:var(--paper);
+           padding:7px 11px;font-size:12.5px;font-family:Georgia,serif;display:none;z-index:50;
+           white-space:nowrap;border-radius:2px}
+  svg text{font-family:Georgia,serif}
+  @media(max-width:640px){.segrow{grid-template-columns:105px 1fr 80px}.toc{columns:1}}
+</style>
+</head>
+<body>
+<div id="progress"></div>
+<div class="sheet">
+
+  <!-- ================= MASTHEAD ================= -->
+  <div class="masthead">
+    <div class="label">Customer Intelligence Ledger &middot; Amazon Fine Food Reviews</div>
+    <h1>The Fine Food<br>Review Files</h1>
+    <p class="tagline">A retention &amp; advocacy investigation across 568,454 reviews, 256,059 customers, thirteen years</p>
+    <div class="edition">
+      <span>Vol. I &middot; No. 1</span>
+      <span>Data cut: Oct 1999 &ndash; Oct 2012</span>
+      <span>SQL &middot; Python &middot; Statistics</span>
+    </div>
+  </div>
+
+  <!-- ================= KPI STRIP ================= -->
+  <div class="strip" id="strip"></div>
+
+  <!-- ================= TOC ================= -->
+  <div class="label" style="margin-top:8px">In this edition</div>
+  <nav class="toc">
+    <a href="#c1"><span class="no">I</span>The thirty percent that wasn't real</a>
+    <a href="#c2"><span class="no">II</span>Six kinds of customer</a>
+    <a href="#c3"><span class="no">III</span>The growth curve</a>
+    <a href="#c4"><span class="no">IV</span>When the stars lie</a>
+    <a href="#c5"><span class="no">V</span>Does it hold up? — the statistics</a>
+    <a href="#c6"><span class="no">VI</span>The advocate list</a>
+  </nav>
+  <hr class="rule double">
+
+  <!-- ================= I. DATA QUALITY ================= -->
+  <section class="chap" id="c1">
+    <div class="chaphead"><span class="no">I</span><h2>The thirty percent that wasn't real</h2>
+      <span class="tag label">Data wrangling &amp; audit</span></div>
+    <p class="lede">Before a single insight, the ledger itself had to be audited — and a third of it failed inspection.</p>
+    <p class="body dropcap">The raw file holds 568,454 reviews. Two of them are structurally impossible — helpfulness votes that exceed the total votes cast. And 174,519 are duplicates: the same customer, the same words, the same second, recorded twice — cross-posted across product variants. Every rule below is enforced in SQL, logged to an audit file, and reconciled by automated tests.</p>
+    <div class="flow">
+      <div class="box"><div class="n" data-count="568454">0</div><div class="label">raw reviews</div></div>
+      <div class="arr">&minus;2 &rarr;</div>
+      <div class="box"><div class="n" data-count="568452">0</div><div class="label">after validity rule</div></div>
+      <div class="arr">&minus;174,519 &rarr;</div>
+      <div class="box" style="border-width:2px"><div class="n" data-count="393931">0</div><div class="label">clean reviews</div></div>
+    </div>
+    <table class="print" id="auditTable"></table>
+    <p class="body" style="font-size:13.5px;color:var(--muted)">Full row-level audit exported to <i>wrangling_audit.json</i>; the pytest suite reconciles removed rows against the final count.</p>
+  </section>
+
+  <!-- ================= II. SEGMENTS ================= -->
+  <section class="chap" id="c2">
+    <div class="chaphead"><span class="no">II</span><h2>Six kinds of customer</h2>
+      <span class="tag label">R-F-E segmentation</span></div>
+    <p class="lede">No revenue column exists in this data — so monetary value was replaced with engagement, and the model says so out loud.</p>
+    <p class="body">Each customer is scored on <b>Recency</b> and <b>Frequency</b> quintiles (SQL <i>NTILE</i> window functions), with <b>Engagement</b> — helpfulness votes earned — as the value proxy. The result is six CRM-standard segments. Click any bar for its profile.</p>
+    <div id="segrows"></div>
+    <div id="segDetail">Select a segment to read its profile.</div>
+  </section>
+
+  <!-- ================= III. GROWTH ================= -->
+  <section class="chap" id="c3">
+    <div class="chaphead"><span class="no">III</span><h2>The growth curve</h2>
+      <span class="tag label">Monthly activity</span></div>
+    <p class="lede">From four thousand reviews a year to two hundred thousand — and the audience kept arriving faster than it returned.</p>
+    <div class="toggle" id="lineToggle">
+      <button data-series="reviews" class="on">Reviews</button>
+      <button data-series="new_users">New reviewers</button>
+      <button data-series="active_users">Active reviewers</button>
+    </div>
+    <svg id="line" width="100%" height="250" viewBox="0 0 560 250" preserveAspectRatio="none"></svg>
+    <p class="body" style="font-size:13.5px;color:var(--muted)">The widening gap between new and active reviewers in 2011–12 is the retention story: acquisition outpaced repeat participation.</p>
+  </section>
+
+  <!-- ================= IV. SENTIMENT GAP ================= -->
+  <section class="chap" id="c4">
+    <div class="chaphead"><span class="no">IV</span><h2>When the stars lie</h2>
+      <span class="tag label">Sentiment &times; rating</span></div>
+    <p class="lede">TextBlob sentiment was scored on every clean review — then validated against the star the same customer gave. Agreement: 58.5%. The disagreement is the story.</p>
+    <svg id="bars" width="100%" height="250" viewBox="0 0 560 250"></svg>
+    <div class="pull">
+      <div class="stat" style="border-color:var(--oxblood)">
+        <div class="n" style="color:var(--oxblood)" data-count="9246">0</div>
+        <div class="t">hidden detractors — four or five stars, but words that complain (avg polarity &minus;0.33). Invisible to any star-only dashboard.</div>
+      </div>
+      <div class="stat" style="border-color:var(--green)">
+        <div class="n" style="color:var(--green)" data-count="9573">0</div>
+        <div class="t">hidden advocates — one or two stars, but positive words (avg polarity +0.44). Often rating the delivery, not the food. Recovery-win candidates.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= V. STATISTICS ================= -->
+  <section class="chap" id="c5">
+    <div class="chaphead"><span class="no">V</span><h2>Does it hold up?</h2>
+      <span class="tag label">Inferential statistics</span></div>
+    <p class="lede">A dashboard suggests; statistics testify. Every claim above was taken to court — non-parametric where the data refused to be normal.</p>
+    <div id="verdicts"></div>
+    <p class="body" style="font-size:13.5px;color:var(--muted)">Why non-parametric? Reviews-per-customer skews past 12, helpfulness votes are log-log skewed, and polarity is bounded and tri-modal. The t-test's normality assumption fails on all three — so Mann-Whitney U and chi-square carry the case.</p>
+  </section>
+
+  <!-- ================= VI. ADVOCATES ================= -->
+  <section class="chap" id="c6">
+    <div class="chaphead"><span class="no">VI</span><h2>The advocate list</h2>
+      <span class="tag label">Activation shortlist</span></div>
+    <p class="lede">Thirty customers worth a thank-you: engaged, trusted by peers, and consistently positive in their own words.</p>
+    <p class="body">Advocates must be Champions or Loyal, have earned at least ten helpfulness votes, and write positive summaries at least 60% of the time. The advocacy score weighs helpfulness (50%), positivity (30%), and activity (20%). Click any column to re-sort.</p>
+    <div style="overflow-x:auto"><table class="adv" id="advTable"></table></div>
+  </section>
+
+  <!-- ================= COLOPHON ================= -->
+  <div class="colophon">
+    <span class="ribbon">&#9670; Tableau Public edition — in preparation</span>
+    <p>Compiled by Meenakshi Sethi &middot; System Analyst, Expert Technology Services (ETSAZ).</p>
+    <p style="margin-top:8px">Method: SQLite audit &amp; segmentation SQL (single source of truth) &rarr; Python pipeline (pandas, TextBlob, scipy, statsmodels) under a seeded, uv-managed environment &rarr; this page, generated programmatically from the pipeline's exports. 568,454 raw reviews &rarr; 393,931 clean (30.7% duplicates and 2 invalid rows removed, every decision logged). Validated by a pytest suite of schema and invariant checks.</p>
+    <p style="margin-top:8px">Source: Amazon Fine Food Reviews (Kaggle / SNAP). This journal is a portfolio artifact; customer identifiers are pseudonymous as shipped in the public dataset.</p>
+  </div>
+</div>
+<div id="tooltip"></div>
+
+<script>
+const DATA = {"kpis": {"raw_reviews": 568454, "clean_reviews": 393931, "invalid_rows": 2, "duplicate_rows": 174521, "duplicate_pct": 30.7, "customers": 256059, "products": 67624, "date_min": "1999-10-08", "date_max": "2012-10-26", "champions": 26295, "at_risk": 14714, "avg_rating_clean": 4.18, "sentiment_rating_agreement_pct": 58.5, "hidden_detractors": 9246, "hidden_detractors_pct_of_high_star": 3.0, "advocates_identified": 30, "pct_positive_overall": 56.5}, "segments": [{"segment": "Casual", "customers": 122831, "avg_reviews": 1.0, "avg_recency_days": 596.37, "avg_score": 4.15, "total_helpful_votes": 203430, "pct_customers": 48.0}, {"segment": "Hibernating", "customers": 43669, "avg_reviews": 1.0, "avg_recency_days": 1148.42, "avg_score": 4.24, "total_helpful_votes": 128304, "pct_customers": 17.1}, {"segment": "New / Promising", "customers": 38348, "avg_reviews": 1.0, "avg_recency_days": 146.13, "avg_score": 4.07, "total_helpful_votes": 23344, "pct_customers": 15.0}, {"segment": "Champions", "customers": 26295, "avg_reviews": 4.54, "avg_recency_days": 130.4, "avg_score": 4.18, "total_helpful_votes": 157471, "pct_customers": 10.3}, {"segment": "At Risk", "customers": 14714, "avg_reviews": 2.68, "avg_recency_days": 1060.45, "avg_score": 4.29, "total_helpful_votes": 114031, "pct_customers": 5.7}, {"segment": "Loyal", "customers": 10202, "avg_reviews": 2.97, "avg_recency_days": 416.24, "avg_score": 4.23, "total_helpful_votes": 56651, "pct_customers": 4.0}], "monthly": [{"month": "2007-01", "reviews": 2107, "active_users": 1839, "avg_score": 4.4, "new_users": 1729}, {"month": "2007-02", "reviews": 1102, "active_users": 960, "avg_score": 4.36, "new_users": 871}, {"month": "2007-03", "reviews": 1421, "active_users": 1214, "avg_score": 4.36, "new_users": 1087}, {"month": "2007-04", "reviews": 747, "active_users": 655, "avg_score": 4.44, "new_users": 569}, {"month": "2007-05", "reviews": 1517, "active_users": 1321, "avg_score": 4.45, "new_users": 1166}, {"month": "2007-06", "reviews": 994, "active_users": 884, "avg_score": 4.34, "new_users": 766}, {"month": "2007-07", "reviews": 1143, "active_users": 961, "avg_score": 4.36, "new_users": 851}, {"month": "2007-08", "reviews": 1177, "active_users": 1034, "avg_score": 4.41, "new_users": 899}, {"month": "2007-09", "reviews": 1217, "active_users": 1045, "avg_score": 4.41, "new_users": 914}, {"month": "2007-10", "reviews": 1293, "active_users": 1113, "avg_score": 4.35, "new_users": 959}, {"month": "2007-11", "reviews": 1436, "active_users": 1251, "avg_score": 4.39, "new_users": 1084}, {"month": "2007-12", "reviews": 1641, "active_users": 1460, "avg_score": 4.37, "new_users": 1303}, {"month": "2008-01", "reviews": 1892, "active_users": 1681, "avg_score": 4.36, "new_users": 1477}, {"month": "2008-02", "reviews": 1906, "active_users": 1629, "avg_score": 4.37, "new_users": 1431}, {"month": "2008-03", "reviews": 1626, "active_users": 1418, "avg_score": 4.38, "new_users": 1184}, {"month": "2008-04", "reviews": 1830, "active_users": 1627, "avg_score": 4.36, "new_users": 1350}, {"month": "2008-05", "reviews": 2129, "active_users": 1822, "avg_score": 4.4, "new_users": 1471}, {"month": "2008-06", "reviews": 1973, "active_users": 1696, "avg_score": 4.3, "new_users": 1333}, {"month": "2008-07", "reviews": 2033, "active_users": 1762, "avg_score": 4.33, "new_users": 1381}, {"month": "2008-08", "reviews": 1804, "active_users": 1580, "avg_score": 4.32, "new_users": 1274}, {"month": "2008-09", "reviews": 1685, "active_users": 1510, "avg_score": 4.34, "new_users": 1208}, {"month": "2008-10", "reviews": 1845, "active_users": 1619, "avg_score": 4.33, "new_users": 1253}, {"month": "2008-11", "reviews": 2092, "active_users": 1795, "avg_score": 4.35, "new_users": 1418}, {"month": "2008-12", "reviews": 2317, "active_users": 2031, "avg_score": 4.29, "new_users": 1628}, {"month": "2009-01", "reviews": 2810, "active_users": 2434, "avg_score": 4.37, "new_users": 2026}, {"month": "2009-02", "reviews": 2833, "active_users": 2469, "avg_score": 4.26, "new_users": 1946}, {"month": "2009-03", "reviews": 3364, "active_users": 2796, "avg_score": 4.22, "new_users": 2109}, {"month": "2009-04", "reviews": 2954, "active_users": 2527, "avg_score": 4.32, "new_users": 1949}, {"month": "2009-05", "reviews": 2896, "active_users": 2463, "avg_score": 4.29, "new_users": 1843}, {"month": "2009-06", "reviews": 3256, "active_users": 2776, "avg_score": 4.28, "new_users": 2024}, {"month": "2009-07", "reviews": 2707, "active_users": 2236, "avg_score": 4.23, "new_users": 1601}, {"month": "2009-08", "reviews": 2810, "active_users": 2395, "avg_score": 4.25, "new_users": 1927}, {"month": "2009-09", "reviews": 3499, "active_users": 3021, "avg_score": 4.33, "new_users": 2408}, {"month": "2009-10", "reviews": 3492, "active_users": 2972, "avg_score": 4.28, "new_users": 2350}, {"month": "2009-11", "reviews": 3475, "active_users": 3021, "avg_score": 4.29, "new_users": 2373}, {"month": "2009-12", "reviews": 3800, "active_users": 3327, "avg_score": 4.24, "new_users": 2675}, {"month": "2010-01", "reviews": 4125, "active_users": 3573, "avg_score": 4.22, "new_users": 2861}, {"month": "2010-02", "reviews": 4440, "active_users": 3878, "avg_score": 4.32, "new_users": 3149}, {"month": "2010-03", "reviews": 4465, "active_users": 3935, "avg_score": 4.24, "new_users": 3053}, {"month": "2010-04", "reviews": 4095, "active_users": 3568, "avg_score": 4.28, "new_users": 2790}, {"month": "2010-05", "reviews": 4078, "active_users": 3600, "avg_score": 4.28, "new_users": 2888}, {"month": "2010-06", "reviews": 3911, "active_users": 3400, "avg_score": 4.24, "new_users": 2626}, {"month": "2010-07", "reviews": 4764, "active_users": 4176, "avg_score": 4.22, "new_users": 3301}, {"month": "2010-08", "reviews": 4714, "active_users": 4144, "avg_score": 4.21, "new_users": 3279}, {"month": "2010-09", "reviews": 5412, "active_users": 4763, "avg_score": 4.17, "new_users": 3793}, {"month": "2010-10", "reviews": 5422, "active_users": 4715, "avg_score": 4.17, "new_users": 3723}, {"month": "2010-11", "reviews": 5793, "active_users": 5096, "avg_score": 4.2, "new_users": 3978}, {"month": "2010-12", "reviews": 6784, "active_users": 6028, "avg_score": 4.11, "new_users": 4772}, {"month": "2011-01", "reviews": 8226, "active_users": 7198, "avg_score": 4.13, "new_users": 5741}, {"month": "2011-02", "reviews": 7880, "active_users": 6786, "avg_score": 4.12, "new_users": 5115}, {"month": "2011-03", "reviews": 8847, "active_users": 7489, "avg_score": 4.19, "new_users": 5552}, {"month": "2011-04", "reviews": 8197, "active_users": 7033, "avg_score": 4.18, "new_users": 5327}, {"month": "2011-05", "reviews": 7715, "active_users": 6694, "avg_score": 4.19, "new_users": 5028}, {"month": "2011-06", "reviews": 8001, "active_users": 6845, "avg_score": 4.12, "new_users": 5141}, {"month": "2011-07", "reviews": 8568, "active_users": 7317, "avg_score": 4.12, "new_users": 5413}, {"month": "2011-08", "reviews": 9709, "active_users": 8277, "avg_score": 4.14, "new_users": 5984}, {"month": "2011-09", "reviews": 10301, "active_users": 8641, "avg_score": 4.17, "new_users": 6396}, {"month": "2011-10", "reviews": 11386, "active_users": 9529, "avg_score": 4.12, "new_users": 6887}, {"month": "2011-11", "reviews": 11291, "active_users": 9470, "avg_score": 4.13, "new_users": 6725}, {"month": "2011-12", "reviews": 13374, "active_users": 11398, "avg_score": 4.09, "new_users": 8817}, {"month": "2012-01", "reviews": 14861, "active_users": 12467, "avg_score": 4.12, "new_users": 9617}, {"month": "2012-02", "reviews": 13124, "active_users": 10880, "avg_score": 4.1, "new_users": 8024}, {"month": "2012-03", "reviews": 13574, "active_users": 11093, "avg_score": 4.09, "new_users": 7959}, {"month": "2012-04", "reviews": 12542, "active_users": 10486, "avg_score": 4.1, "new_users": 7502}, {"month": "2012-05", "reviews": 13039, "active_users": 10813, "avg_score": 4.1, "new_users": 7649}, {"month": "2012-06", "reviews": 13126, "active_users": 10708, "avg_score": 4.08, "new_users": 7560}, {"month": "2012-07", "reviews": 14542, "active_users": 12180, "avg_score": 4.13, "new_users": 8940}, {"month": "2012-08", "reviews": 14471, "active_users": 11855, "avg_score": 4.12, "new_users": 8561}, {"month": "2012-09", "reviews": 15352, "active_users": 13005, "avg_score": 4.11, "new_users": 9698}, {"month": "2012-10", "reviews": 14555, "active_users": 12483, "avg_score": 4.17, "new_users": 9292}], "sentiment": [{"Score": 1, "reviews": 36306, "avg_polarity": -0.153, "pct_positive": 12.3, "pct_neutral": 53.3, "pct_negative": 34.4}, {"Score": 2, "reviews": 20802, "avg_polarity": 0.001, "pct_positive": 24.5, "pct_neutral": 50.5, "pct_negative": 24.9}, {"Score": 3, "reviews": 29769, "avg_polarity": 0.163, "pct_positive": 44.1, "pct_neutral": 43.1, "pct_negative": 12.8}, {"Score": 4, "reviews": 56093, "avg_polarity": 0.346, "pct_positive": 61.4, "pct_neutral": 34.4, "pct_negative": 4.2}, {"Score": 5, "reviews": 250961, "avg_polarity": 0.456, "pct_positive": 65.9, "pct_neutral": 31.3, "pct_negative": 2.7}], "advocates": [{"UserId": "A3QDITMY3OOYRP", "segment": "Loyal", "review_count": 23, "avg_score": 4.83, "helpful_votes": 45, "helpfulness_ratio": 0.96, "pct_positive": 95.65, "advocacy_score": 96.5, "last_review": "2011-05-24"}, {"UserId": "AE4PE48Q2794I", "segment": "Champions", "review_count": 18, "avg_score": 4.94, "helpful_votes": 35, "helpfulness_ratio": 1.0, "pct_positive": 94.44, "advocacy_score": 96.3, "last_review": "2012-09-13"}, {"UserId": "A3OXHLG6DIBRW8", "segment": "Champions", "review_count": 278, "avg_score": 4.55, "helpful_votes": 513, "helpfulness_ratio": 0.97, "pct_positive": 92.09, "advocacy_score": 96.0, "last_review": "2012-10-24"}, {"UserId": "A3NEAETOSXDBOM", "segment": "Champions", "review_count": 66, "avg_score": 4.91, "helpful_votes": 128, "helpfulness_ratio": 0.99, "pct_positive": 87.88, "advocacy_score": 96.0, "last_review": "2012-09-19"}, {"UserId": "A1X1CEGHTHMBL1", "segment": "Champions", "review_count": 72, "avg_score": 4.85, "helpful_votes": 26, "helpfulness_ratio": 1.0, "pct_positive": 84.72, "advocacy_score": 95.4, "last_review": "2012-10-20"}, {"UserId": "AF72GTWZGAC61", "segment": "Champions", "review_count": 41, "avg_score": 4.71, "helpful_votes": 146, "helpfulness_ratio": 0.98, "pct_positive": 87.8, "advocacy_score": 95.3, "last_review": "2012-07-18"}, {"UserId": "AYB4ELCS5AM8P", "segment": "Champions", "review_count": 66, "avg_score": 4.79, "helpful_votes": 189, "helpfulness_ratio": 0.97, "pct_positive": 89.39, "advocacy_score": 95.3, "last_review": "2012-09-20"}, {"UserId": "A32B6A532454UD", "segment": "Champions", "review_count": 17, "avg_score": 4.82, "helpful_votes": 11, "helpfulness_ratio": 1.0, "pct_positive": 94.12, "advocacy_score": 95.2, "last_review": "2012-08-16"}, {"UserId": "AEP0XAC6F8N2Y", "segment": "Champions", "review_count": 22, "avg_score": 4.95, "helpful_votes": 38, "helpfulness_ratio": 1.0, "pct_positive": 81.82, "advocacy_score": 94.5, "last_review": "2012-08-15"}, {"UserId": "AO0HPTFIKQE9B", "segment": "Champions", "review_count": 26, "avg_score": 4.85, "helpful_votes": 61, "helpfulness_ratio": 0.95, "pct_positive": 88.46, "advocacy_score": 94.2, "last_review": "2012-10-23"}, {"UserId": "A35MDIBPAX9X7U", "segment": "Champions", "review_count": 14, "avg_score": 5.0, "helpful_votes": 13, "helpfulness_ratio": 1.0, "pct_positive": 100.0, "advocacy_score": 94.0, "last_review": "2012-06-15"}, {"UserId": "ALDAF4VVLFRHP", "segment": "Champions", "review_count": 40, "avg_score": 4.6, "helpful_votes": 16, "helpfulness_ratio": 1.0, "pct_positive": 80.0, "advocacy_score": 94.0, "last_review": "2012-08-22"}, {"UserId": "AH6BI8F3EE6K1", "segment": "Champions", "review_count": 26, "avg_score": 4.92, "helpful_votes": 60, "helpfulness_ratio": 0.92, "pct_positive": 92.31, "advocacy_score": 93.8, "last_review": "2012-04-01"}, {"UserId": "A2YO8731SKDKLL", "segment": "Champions", "review_count": 30, "avg_score": 5.0, "helpful_votes": 53, "helpfulness_ratio": 0.91, "pct_positive": 93.33, "advocacy_score": 93.7, "last_review": "2012-10-03"}, {"UserId": "AW6J9IILGOZY3", "segment": "Champions", "review_count": 22, "avg_score": 3.91, "helpful_votes": 161, "helpfulness_ratio": 0.95, "pct_positive": 86.36, "advocacy_score": 93.6, "last_review": "2012-08-15"}, {"UserId": "AM8J1UVGVYAL4", "segment": "Champions", "review_count": 17, "avg_score": 4.41, "helpful_votes": 10, "helpfulness_ratio": 1.0, "pct_positive": 88.24, "advocacy_score": 93.5, "last_review": "2012-08-21"}, {"UserId": "A2KQT4D0OZR569", "segment": "Champions", "review_count": 25, "avg_score": 4.52, "helpful_votes": 47, "helpfulness_ratio": 0.89, "pct_positive": 96.0, "advocacy_score": 93.2, "last_review": "2012-08-23"}, {"UserId": "A1SCQYLCP16AK3", "segment": "Champions", "review_count": 15, "avg_score": 4.93, "helpful_votes": 13, "helpfulness_ratio": 1.0, "pct_positive": 93.33, "advocacy_score": 93.0, "last_review": "2012-07-22"}, {"UserId": "ANMA1H8LGEVBF", "segment": "Champions", "review_count": 21, "avg_score": 3.81, "helpful_votes": 233, "helpfulness_ratio": 0.97, "pct_positive": 80.95, "advocacy_score": 92.6, "last_review": "2012-08-22"}, {"UserId": "A1KZUXE70GYNGO", "segment": "Champions", "review_count": 20, "avg_score": 4.05, "helpful_votes": 12, "helpfulness_ratio": 1.0, "pct_positive": 75.0, "advocacy_score": 92.5, "last_review": "2012-10-18"}, {"UserId": "A2A9X58G2GTBLP", "segment": "Champions", "review_count": 42, "avg_score": 4.98, "helpful_votes": 54, "helpfulness_ratio": 0.96, "pct_positive": 80.95, "advocacy_score": 92.5, "last_review": "2012-09-13"}, {"UserId": "A2L6BT1PVV9YN0", "segment": "Champions", "review_count": 21, "avg_score": 4.38, "helpful_votes": 57, "helpfulness_ratio": 0.9, "pct_positive": 90.48, "advocacy_score": 92.4, "last_review": "2012-07-19"}, {"UserId": "A3RYMO6S22FMM5", "segment": "Champions", "review_count": 27, "avg_score": 4.56, "helpful_votes": 66, "helpfulness_ratio": 0.93, "pct_positive": 85.19, "advocacy_score": 92.1, "last_review": "2012-09-14"}, {"UserId": "A2D1LPEUCTNT8X", "segment": "Champions", "review_count": 66, "avg_score": 4.56, "helpful_votes": 128, "helpfulness_ratio": 0.98, "pct_positive": 75.76, "advocacy_score": 92.0, "last_review": "2012-09-26"}, {"UserId": "A19XMHRB3G4DIR", "segment": "Champions", "review_count": 34, "avg_score": 4.47, "helpful_votes": 242, "helpfulness_ratio": 0.94, "pct_positive": 82.35, "advocacy_score": 92.0, "last_review": "2012-09-10"}, {"UserId": "A1R377IPZOKLMM", "segment": "Champions", "review_count": 26, "avg_score": 4.85, "helpful_votes": 18, "helpfulness_ratio": 1.0, "pct_positive": 73.08, "advocacy_score": 91.9, "last_review": "2012-10-21"}, {"UserId": "A315S3F1NHG7Y8", "segment": "Champions", "review_count": 26, "avg_score": 4.54, "helpful_votes": 16, "helpfulness_ratio": 1.0, "pct_positive": 73.08, "advocacy_score": 91.9, "last_review": "2012-08-30"}, {"UserId": "AQ52JX9ES6XYY", "segment": "Champions", "review_count": 51, "avg_score": 4.84, "helpful_votes": 105, "helpfulness_ratio": 0.93, "pct_positive": 84.31, "advocacy_score": 91.7, "last_review": "2012-10-17"}, {"UserId": "AY54QSGO3KWEM", "segment": "Loyal", "review_count": 16, "avg_score": 4.63, "helpful_votes": 63, "helpfulness_ratio": 0.91, "pct_positive": 100.0, "advocacy_score": 91.6, "last_review": "2011-06-01"}, {"UserId": "A1K82R24ROO2I7", "segment": "Champions", "review_count": 78, "avg_score": 4.58, "helpful_votes": 239, "helpfulness_ratio": 0.98, "pct_positive": 74.36, "advocacy_score": 91.5, "last_review": "2012-09-20"}], "audit": [{"step": 1, "rule": "Drop rows where HelpfulnessNumerator > HelpfulnessDenominator", "reason": "Structurally impossible: helpful votes are a subset of total votes", "rows_removed": 2, "rows_after": 568452}, {"step": 2, "rule": "Deduplicate on (UserId, ProfileName, Time, Text), keep lowest Id", "reason": "Cross-posted reviews would double-count customer activity", "rows_removed": 174521, "rows_after": 393931}], "stats": {"config": {"random_seed": 42, "alpha": 0.05, "target_power": 0.8, "mde_polarity": 0.05, "mwu_groups": ["Champions", "Casual"], "mwu_min_votes": 1, "ols_target": "log_helpful_votes", "ols_features": ["review_count", "products_reviewed", "avg_score", "recency_days"]}, "profiling": {"reviews_per_customer": {"mean": 1.54, "median": 1.0, "p90": 2.0, "skew": 30.87}, "helpful_votes_per_customer": {"mean": 2.67, "median": 1.0, "p90": 6.0, "skew": 27.69}, "polarity": {"mean": 0.338, "median": 0.3, "skew": -0.15, "std": 0.444}}, "mannwhitney": {"test": "Mann-Whitney U (two-sided)", "question": "Do Champions earn a higher helpfulness ratio than Casual reviewers?", "why_nonparametric": "helpfulness ratio is bounded [0,1] and skewed; t-test normality invalid", "groups": ["Champions", "Casual"], "n": [19378, 65463], "median": [0.93, 1.0], "u_statistic": 564279186.5, "p_value": 2.642891673464655e-153, "significant": true}, "chi_square": {"test": "Chi-square test of independence", "question": "Is review sentiment independent of customer segment?", "chi2": 948.8, "dof": 10, "p_value": 1.9724253790664017e-197, "cramers_v": 0.035, "effect_label": "weak", "significant": true}, "ols": {"test": "OLS regression (statsmodels)", "question": "What drives customer influence (helpfulness votes earned)?", "why_log_target": "raw votes are extremely right-skewed; log1p is the documented transform", "n": 256059, "r_squared": 0.203, "adj_r_squared": 0.203, "f_p_value": 0.0, "coefficients": [{"name": "Intercept", "coef": 0.5477, "p_value": 0.0}, {"name": "review_count", "coef": -0.0966, "p_value": 2.2971450191711992e-10}, {"name": "products_reviewed", "coef": 0.2095, "p_value": 5.5774423642379584e-42}, {"name": "avg_score", "coef": -0.07, "p_value": 0.0}, {"name": "recency_days", "coef": 0.0005, "p_value": 0.0}]}, "power": {"test": "Power analysis (TTestIndPower)", "question": "How many reviews per group to detect a 0.05 polarity shift at 80% power?", "mde": 0.05, "polarity_std": 0.444, "cohens_d": 0.113, "alpha": 0.05, "power": 0.8, "n_per_group": 1238}}};
+
+/* ---------- scroll progress + reveals ---------- */
+addEventListener('scroll',()=>{
+  const h=document.documentElement;
+  document.getElementById('progress').style.width=
+    (h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+'%';
+});
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.classList.add('in');
+    e.target.querySelectorAll('[data-count]').forEach(countUp); io.unobserve(e.target);}
+}),{threshold:.12});
+document.querySelectorAll('.chap').forEach(c=>io.observe(c));
+
+/* ---------- animated counters ---------- */
+function countUp(el){
+  if(el.dataset.done)return; el.dataset.done=1;
+  const target=+el.dataset.count, t0=performance.now(), dur=1100;
+  const fmt=n=>n.toLocaleString('en-US');
+  (function tick(t){
+    const p=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-p,3);
+    el.textContent=fmt(Math.round(target*e));
+    if(p<1)requestAnimationFrame(tick);
+  })(t0);
+}
+
+/* ---------- tooltip ---------- */
+const tip=document.getElementById('tooltip');
+function showTip(html,ev){tip.innerHTML=html;tip.style.display='block';
+  tip.style.left=Math.min(ev.clientX+14,innerWidth-200)+'px';
+  tip.style.top=(ev.clientY+14)+'px';}
+function hideTip(){tip.style.display='none';}
+
+/* ---------- KPI strip ---------- */
+const stripDefs=[
+  {n:DATA.kpis.clean_reviews.toLocaleString(),c:'clean reviews'},
+  {n:DATA.kpis.customers.toLocaleString(),c:'customers'},
+  {n:DATA.kpis.products.toLocaleString(),c:'products'},
+  {n:DATA.kpis.avg_rating_clean,c:'avg rating'},
+  {n:DATA.kpis.sentiment_rating_agreement_pct+'%',c:'sentiment agreement'},
+  {n:DATA.kpis.advocates_identified,c:'advocates shortlisted'},
+];
+document.getElementById('strip').innerHTML=stripDefs.map(k=>
+  `<div class="cell"><div class="num">${k.n}</div><div class="cap label">${k.c}</div></div>`).join('');
+
+/* ---------- audit table ---------- */
+document.getElementById('auditTable').innerHTML=
+  '<thead><tr><th>Step</th><th>Rule</th><th>Reason</th><th style="text-align:right">Rows removed</th>'+
+  '<th style="text-align:right">Rows after</th></tr></thead><tbody>'+
+  DATA.audit.map(a=>`<tr><td>${a.step}</td><td>${a.rule}</td><td style="color:var(--muted);font-style:italic">${a.reason}</td>`+
+  `<td class="num">&minus;${a.rows_removed.toLocaleString()}</td><td class="num">${a.rows_after.toLocaleString()}</td></tr>`).join('')+
+  '</tbody>';
+
+/* ---------- segment bars ---------- */
+const SEGCOLORS={'Champions':'var(--green)','Loyal':'var(--blue)','At Risk':'var(--gold)',
+  'New / Promising':'#7a5ea0','Hibernating':'#8d8577','Casual':'#b0a68f'};
+const maxC=Math.max(...DATA.segments.map(s=>s.customers));
+document.getElementById('segrows').innerHTML=DATA.segments.map(s=>`
+  <div class="segrow" data-seg="${s.segment}">
+    <div class="nm">${s.segment}<i>${s.pct_customers}% of base</i></div>
+    <div class="barwrap"><div class="bar" data-w="${(100*s.customers/maxC).toFixed(1)}"
+      style="background:${SEGCOLORS[s.segment]||'#999'};width:0"></div></div>
+    <div class="val">${s.customers.toLocaleString()} customers</div>
+  </div>`).join('');
+const segIO=new IntersectionObserver(es=>es.forEach(e=>{
+  if(e.isIntersecting){e.target.querySelectorAll('.bar').forEach(b=>
+    b.style.width=b.dataset.w+'%'); segIO.unobserve(e.target);}
+}),{threshold:.3});
+segIO.observe(document.getElementById('c2'));
+document.querySelectorAll('.segrow').forEach(row=>{
+  row.addEventListener('click',()=>selectSegment(row.dataset.seg));
+  row.addEventListener('mousemove',ev=>{const s=DATA.segments.find(
+    x=>x.segment===row.dataset.seg);
+    showTip(`<b>${s.segment}</b> &middot; ${s.avg_reviews} avg reviews &middot; ${s.avg_score}&#9733; avg`,ev);});
+  row.addEventListener('mouseleave',hideTip);
+});
+function selectSegment(name){
+  document.querySelectorAll('.segrow').forEach(r=>
+    r.classList.toggle('active',r.dataset.seg===name));
+  const s=DATA.segments.find(x=>x.segment===name);
+  document.getElementById('segDetail').innerHTML=
+    `<b>${s.segment}</b> — ${s.customers.toLocaleString()} customers (${s.pct_customers}% of the base). `+
+    `Average ${s.avg_reviews} reviews each, rated ${s.avg_score} stars on average, `+
+    `last active ${Math.round(s.avg_recency_days)} days before the data cut, `+
+    `with ${s.total_helpful_votes.toLocaleString()} helpfulness votes earned across the segment.`;
+}
+
+/* ---------- line chart ---------- */
+const lineSvg=document.getElementById('line');
+const W=560,H=250,P={l:48,r:12,t:12,b:26};
+let lineSeries='reviews';
+function drawLine(){
+  lineSvg.innerHTML='';
+  const vals=DATA.monthly.map(m=>m[lineSeries]);
+  const mx=Math.max(...vals)*1.05;
+  const x=i=>P.l+(W-P.l-P.r)*i/(DATA.monthly.length-1);
+  const y=v=>H-P.b-(H-P.t-P.b)*v/mx;
+  for(let g=0;g<=4;g++){
+    const gy=H-P.b-(H-P.t-P.b)*g/4;
+    const ln=mk('line',{x1:P.l,x2:W-P.r,y1:gy,y2:gy,stroke:'#d8cdb8','stroke-dasharray':'2,4'});
+    lineSvg.appendChild(ln);
+    const lb=mk('text',{x:P.l-7,y:gy+4,'text-anchor':'end',fill:'#7a6f60','font-size':10});
+    lb.textContent=Math.round(mx*g/4).toLocaleString(); lineSvg.appendChild(lb);
+  }
+  const pts=vals.map((v,i)=>`${x(i)},${y(v)}`).join(' ');
+  lineSvg.appendChild(mk('polygon',{points:`${P.l},${H-P.b} ${pts} ${W-P.r},${H-P.b}`,fill:'rgba(47,77,107,.10)'}));
+  lineSvg.appendChild(mk('polyline',{points:pts,fill:'none',stroke:'#2f4d6b','stroke-width':2.2}));
+  [0,DATA.monthly.length-1].forEach(i=>{
+    const lb=mk('text',{x:x(i),y:H-8,'text-anchor':i?'end':'start',fill:'#7a6f60','font-size':10});
+    lb.textContent=DATA.monthly[i].month; lineSvg.appendChild(lb);
+  });
+  const hit=mk('rect',{x:P.l,y:P.t,width:W-P.l-P.r,height:H-P.t-P.b,fill:'transparent'});
+  hit.addEventListener('mousemove',ev=>{
+    const rect=lineSvg.getBoundingClientRect();
+    const i=Math.max(0,Math.min(DATA.monthly.length-1,
+      Math.round(((ev.clientX-rect.left)/rect.width*W-P.l)/(W-P.l-P.r)*(DATA.monthly.length-1))));
+    const m=DATA.monthly[i];
+    showTip(`<b>${m.month}</b> &middot; ${m[lineSeries].toLocaleString()} ${lineSeries.replace('_',' ')} &middot; avg ${m.avg_score}&#9733;`,ev);
+  });
+  hit.addEventListener('mouseleave',hideTip);
+  lineSvg.appendChild(hit);
+}
+function mk(tag,attrs){const el=document.createElementNS('http://www.w3.org/2000/svg',tag);
+  for(const k in attrs)el.setAttribute(k,attrs[k]); return el;}
+drawLine();
+document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('#lineToggle button').forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); lineSeries=b.dataset.series; drawLine();
+}));
+
+/* ---------- stacked sentiment bars ---------- */
+(function(){
+  const bars=document.getElementById('bars');
+  const BW=560,BH=250,p={l:48,r:12,t:12,b:26};
+  const maxN=Math.max(...DATA.sentiment.map(s=>s.reviews));
+  const x=i=>p.l+(BW-p.l-p.r)*(i+0.5)/DATA.sentiment.length;
+  const w=(BW-p.l-p.r)/DATA.sentiment.length-30;
+  const y=v=>BH-p.b-(BH-p.t-p.b)*v/maxN;
+  const parts=[['pct_negative','Negative','#8f2b1e'],['pct_neutral','Neutral','#b3a893'],['pct_positive','Positive','#41684a']];
+  DATA.sentiment.forEach((s,i)=>{
+    let acc=0;
+    parts.forEach(([key,name,col])=>{
+      const h=(s[key]/100)*s.reviews;
+      const r=mk('rect',{x:x(i)-w/2,width:w,y:y(acc+h),height:Math.max(0,y(acc)-y(acc+h)),fill:col});
+      r.addEventListener('mousemove',ev=>showTip(`<b>${s.Score}&#9733;</b> &middot; ${name}<br>${s[key]}% of ${s.reviews.toLocaleString()} reviews &middot; avg polarity ${s.avg_polarity}`,ev));
+      r.addEventListener('mouseleave',hideTip);
+      bars.appendChild(r); acc+=h;
+    });
+    const lb=mk('text',{x:x(i),y:BH-8,'text-anchor':'middle',fill:'#7a6f60','font-size':12});
+    lb.textContent=s.Score+'\u2605'; bars.appendChild(lb);
+  });
+})();
+
+/* ---------- statistical verdicts ---------- */
+(function(){
+  const v=document.getElementById('verdicts');
+  if(!DATA.stats){v.innerHTML='<p class="body">Statistics pending — run stage 4.</p>';return;}
+  const S=DATA.stats, yes='SIGNIFICANT', no='NOT SIGNIFICANT';
+  const mw=S.mannwhitney, ch=S.chi_square, ol=S.ols, pw=S.power;
+  const sigCoefs=ol.coefficients.filter(c=>c.p_value<0.05&&c.name!=='Intercept');
+  v.innerHTML=`
+  <div class="verdict"><span class="stamp${mw.significant?'':' neg'}">${mw.significant?yes:no}</span>
+    <h3>Mann-Whitney U — trust across segments</h3>
+    <div class="q">${mw.question}</div>
+    <div class="row"><span>U <b>${mw.u_statistic.toLocaleString()}</b></span>
+      <span>p <b>${mw.p_value.toExponential(2)}</b></span>
+      <span>medians <b>${mw.median[0]} vs ${mw.median[1]}</b></span>
+      <span>n <b>${mw.n[0].toLocaleString()} vs ${mw.n[1].toLocaleString()}</b></span></div>
+    <div class="coef">${mw.why_nonparametric}. ${mw.significant ? (
+      mw.median[0] > mw.median[1]
+        ? `${mw.groups[0]} reviewers earn a materially higher helpfulness ratio — engagement and trust travel together.`
+        : `The difference is real but counter-intuitive: ${mw.groups[1]} reviewers earn a slightly higher median helpfulness ratio (${mw.median[1]} vs ${mw.median[0]}). Writing many reviews dilutes per-review trust — volume is not influence.`
+    ) : 'No detectable trust difference between the segments.'}</div>
+  </div>
+  <div class="verdict"><span class="stamp${ch.significant?'':' neg'}">${ch.significant?yes:no}</span>
+    <h3>Chi-square — sentiment &times; segment</h3>
+    <div class="q">${ch.question}</div>
+    <div class="row"><span>&chi;&sup2; <b>${ch.chi2.toLocaleString()}</b></span>
+      <span>dof <b>${ch.dof}</b></span><span>p <b>${ch.p_value.toExponential(2)}</b></span>
+      <span>Cram&eacute;r's V <b>${ch.cramers_v}</b> (${ch.effect_label})</span></div>
+    <div class="coef">Segment membership and tone are ${ch.significant?'related — targeting by segment can lean on voice, though the effect is '+ch.effect_label+'.':'independent.'}</div>
+  </div>
+  <div class="verdict"><span class="stamp">R&sup2; ${ol.r_squared}</span>
+    <h3>OLS regression — the anatomy of influence</h3>
+    <div class="q">${ol.question}</div>
+    <div class="row"><span>n <b>${ol.n.toLocaleString()}</b></span>
+      <span>adj-R&sup2; <b>${ol.adj_r_squared}</b></span>
+      <span>F p <b>${ol.f_p_value.toExponential(2)}</b></span></div>
+    <div class="coef">Target ${ol.why_log_target ? 'log(helpful votes + 1) — '+ol.why_log_target : 'log(votes)'}.
+      Significant drivers: ${sigCoefs.map(c=>`${c.name} (&beta;=${c.coef}, p=${c.p_value.toExponential(1)})`).join(' &middot; ')}</div>
+  </div>
+  <div class="verdict"><span class="stamp">n &ge; ${pw.n_per_group.toLocaleString()}</span>
+    <h3>Power analysis — sizing the next experiment</h3>
+    <div class="q">${pw.question}</div>
+    <div class="row"><span>MDE <b>${pw.mde}</b></span><span>Cohen's d <b>${pw.cohens_d}</b></span>
+      <span>&alpha; <b>${pw.alpha}</b></span><span>power <b>${pw.power}</b></span>
+      <span>per group <b>${pw.n_per_group.toLocaleString()}</b></span></div>
+    <div class="coef">Any A/B test on review sentiment needs at least this many reviews per arm before a verdict is worth printing.</div>
+  </div>`;
+})();
+
+/* ---------- advocates table ---------- */
+const tbl=document.getElementById('advTable');
+let sortKey='advocacy_score',sortAsc=false;
+function renderAdv(){
+  const rows=[...DATA.advocates].sort((a,b)=>(a[sortKey]>b[sortKey]?1:-1)*(sortAsc?1:-1));
+  const cols=[['UserId','Customer'],['segment','Segment'],['review_count','Reviews'],
+    ['avg_score','Avg &#9733;'],['helpful_votes','Votes earned'],
+    ['helpfulness_ratio','Helpfulness'],['pct_positive','% positive'],
+    ['advocacy_score','Advocacy score'],['last_review','Last active']];
+  tbl.innerHTML='<thead><tr>'+cols.map(([k,n])=>
+    `<th data-k="${k}" class="${k===sortKey?'sorted':''}">${n}${k===sortKey?(sortAsc?' &uarr;':' &darr;'):''}</th>`).join('')+
+    '</tr></thead><tbody>'+rows.map(r=>`<tr>
+      <td>${r.UserId}</td><td style="text-align:right"><span class="segtag ${r.segment}">${r.segment}</span></td>
+      <td>${r.review_count}</td><td>${r.avg_score}</td><td>${r.helpful_votes}</td>
+      <td>${(r.helpfulness_ratio*100).toFixed(0)}%</td><td>${r.pct_positive.toFixed(0)}%</td>
+      <td><b>${r.advocacy_score}</b></td><td>${r.last_review}</td></tr>`).join('')+'</tbody>';
+  tbl.querySelectorAll('th').forEach(th=>th.addEventListener('click',()=>{
+    const k=th.dataset.k;
+    if(k===sortKey){sortAsc=!sortAsc}else{sortKey=k;sortAsc=(k==='UserId'||k==='last_review'||k==='segment')}
+    renderAdv();
+  }));
+}
+renderAdv();
+</script>
+</body>
+</html>
