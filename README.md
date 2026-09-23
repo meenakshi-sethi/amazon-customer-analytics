@@ -1,7 +1,7 @@
 # The Fine Food Review Files
 ### Amazon Customer Analytics — Retention & Advocacy Intelligence
 
-**SQL + Python + statistical inference** — SQLite · pandas · TextBlob · scipy · statsmodels | **[Interactive Report](dashboard.html)**
+**SQL + Python + statistical inference** — SQLite · pandas · TextBlob · scipy · statsmodels | **[Live Dashboard](https://meenakshi-sethi.github.io/amazon-customer-analytics/dashboard.html)** · [Interactive Report](dashboard.html) · [GitHub repository](https://github.com/meenakshi-sethi/amazon-customer-analytics)
 
 An end-to-end customer analytics investigation over **568,454 Amazon fine-food reviews (Oct 1999 – Oct 2012)**: SQL-driven data quality enforcement, RF-E customer segmentation, validated sentiment analysis, inferential statistics, and an activation-ready advocate shortlist — delivered as a reproducible pipeline and an interactive, zero-dependency [dashboard](dashboard.html).
 

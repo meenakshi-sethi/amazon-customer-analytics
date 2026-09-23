@@ -25,9 +25,7 @@ ROOT = Path(__file__).resolve().parents[1]
 EXPORTS = ROOT / "exports"
 OUT = ROOT / "dashboard.html"
 
-# TODO: after creating the GitHub repo, replace with the real URL
-# (and update the matching link in README.md).
-REPO_URL = "https://github.com/your-username/amazon-customer-analytics"
+REPO_URL = "https://github.com/meenakshi-sethi/amazon-customer-analytics"
 
 kpis = json.loads((EXPORTS / "kpis.json").read_text())
 segments = pd.read_csv(EXPORTS / "segment_summary.csv").to_dict("records")

@@ -15,3 +15,6 @@ exports/customer_master.csv
 # OS
 .DS_Store
 Thumbs.db
+
+# Documentation output
+docs/
