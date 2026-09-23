@@ -178,6 +178,13 @@
   .skewfig{margin:16px 0 0;break-inside:avoid}
   .skewfig img{width:100%;height:auto;border:1px solid var(--rule);background:#fff;display:block}
   .skewfig figcaption{font-size:12.5px;color:var(--muted);margin-top:7px;line-height:1.55}
+  /* taxonomy strip — the kinds of statistical analysis */
+  .taxstrip{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 4px}
+  .taxchip{font-size:11px;letter-spacing:.05em;padding:5px 12px;border:1px solid var(--rule);
+    border-radius:999px;color:var(--muted);background:#fff;text-transform:uppercase}
+  .taxchip.used{border-color:var(--ink);color:var(--ink);font-weight:600}
+  .taxchip .q{display:block;font-size:9.5px;letter-spacing:.03em;text-transform:none;
+    color:var(--muted);font-weight:400;margin-top:2px}
 
   /* colophon */
   .colophon{margin-top:60px;border-top:3px double var(--rule);padding-top:18px;
@@ -300,6 +307,17 @@
     <div class="chaphead"><span class="no">V</span><h2>Does it hold up?</h2>
       <span class="tag label">Inferential statistics</span></div>
     <p class="lede">A dashboard suggests; statistics testify. Every claim above was taken to court — non-parametric where the data refused to be normal.</p>
+    <div class="taxstrip">
+      <span class="taxchip used tip" data-tip="<b>Descriptive analysis.</b> Summarizes what happened &mdash; averages, ranges, charts. No verdicts, just a clear picture. Used here: chapters I&ndash;IV of this report.">Descriptive<span class="q">what happened?</span></span>
+      <span class="taxchip used tip" data-tip="<b>Exploratory data analysis (EDA).</b> Look before you leap &mdash; plots and summaries to find patterns before any hypothesis is fixed. Used here: the exploration notebook that ships with this report.">Exploratory<span class="q">what's in there?</span></span>
+      <span class="taxchip used tip" data-tip="<b>Diagnostic analysis.</b> Asks why something happened by examining relationships between variables. Used here: the sentiment cross-tab (Ch. IV) explaining hidden detractors &mdash; low stars, warm words.">Diagnostic<span class="q">why did it happen?</span></span>
+      <span class="taxchip used tip" data-tip="<b>Inferential analysis.</b> Does the pattern hold beyond this sample? Hypothesis tests, p-values, effect sizes. Used here: this entire chapter &mdash; every verdict card below.">Inferential<span class="q">does it hold up?</span></span>
+      <span class="taxchip tip" data-tip="<b>Predictive analysis.</b> Forecasts what might happen next from historical data &mdash; time series, ML models. Not used: the retention timeline (Ch. II) only describes the past; no forecasting was in scope.">Predictive<span class="q">what's next?</span></span>
+      <span class="taxchip tip" data-tip="<b>Prescriptive analysis.</b> Recommends what to do next, combining data with business rules. Not formally used &mdash; though the advocate shortlist (Ch. VI) leans this way.">Prescriptive<span class="q">what to do?</span></span>
+      <span class="taxchip tip" data-tip="<b>Causal analysis.</b> Proves X causes Y &mdash; needs experiments (A/B tests), not observation. Not used: every relationship below is an association, not a proven cause. The power analysis sizes the experiment that could change that.">Causal<span class="q">did X cause Y?</span></span>
+      <span class="taxchip tip" data-tip="<b>Bayesian analysis.</b> Updates the probability of a belief as evidence arrives. Not used: every test in this chapter is the classic (frequentist) kind.">Bayesian<span class="q">update beliefs</span></span>
+    </div>
+    <p class="body" style="font-size:12px;color:var(--muted);margin:6px 0 0">The dark chips are the kinds of analysis this report actually performs; hover any chip to learn what that kind is for. The light ones are deliberately out of scope &mdash; a report that claims more than it proves is lying.</p>
     <div class="corrbtns" style="margin:0 0 16px">
       <button onclick="__toggleAll(true)">Expand all explanations</button>
       <button onclick="__toggleAll(false)">Collapse all</button>
@@ -307,11 +325,13 @@
     </div>
     <div class="chooser">
       <div class="chtitle">Which tool, when? &mdash; the analyst's chooser</div>
-      <p class="chintro">Every test in this chapter was picked by one rule: <b>match the tool to the shape of the data and the question.</b> Categories (labels like "Champion" or "Positive") get the counting test; quantities (votes, days, ratings) get the relationship tests; lopsided quantities get the rank-based versions that stay honest.</p>
+      <p class="chintro">Every test in this chapter was picked by one rule: <b>match the tool to the shape of the data and the question.</b> The selection path, in order: define the objective &rarr; identify the data type (category or quantity) &rarr; count the variables involved &rarr; check each method's assumptions &rarr; ask whether the observations are paired or independent. Categories (labels like "Champion" or "Positive") get the counting test; quantities (votes, days, ratings) get the relationship tests; lopsided quantities get the rank-based versions that stay honest.</p>
       <table>
         <tr><th>The question</th><th>The data's shape</th><th>The right tool</th><th>Used below</th></tr>
         <tr><td>Do two groups differ?</td><td>Quantities, well-balanced</td><td>t-test (averages)</td><td>&mdash; (data too skewed)</td></tr>
         <tr><td>Do two groups differ?</td><td>Quantities, lopsided</td><td>Mann-Whitney U (rankings)</td><td>&#10003; trust across segments</td></tr>
+        <tr><td>Do three or more groups differ?</td><td>Quantities, well-balanced</td><td>ANOVA (averages)</td><td>&mdash; (same skew problem)</td></tr>
+        <tr><td>Do three or more groups differ?</td><td>Quantities, lopsided</td><td>Kruskal-Wallis (rankings)</td><td>&mdash; (every question here compares two)</td></tr>
         <tr><td>Are two <i>categories</i> related?</td><td>Category &times; category</td><td>Chi-square + Cram&eacute;r's V</td><td>&#10003; segment &times; tone</td></tr>
         <tr><td>Do two <i>quantities</i> move together?</td><td>Quantity &times; quantity</td><td>Correlation matrix (Pearson / Spearman)</td><td>&#10003; the heatmap below</td></tr>
         <tr><td>What drives one outcome?</td><td>Many quantities &rarr; one outcome</td><td>Regression (OLS)</td><td>&#10003; anatomy of influence</td></tr>
@@ -587,6 +607,7 @@ document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('c
       document.getElementById('corrBody').innerHTML=rowsHtml(m);
       document.getElementById('corrBtnS').className=window.__corrMode==='spearman'?'on':'';
       document.getElementById('corrBtnP').className=window.__corrMode==='pearson'?'on':'';
+      if(window.__wireTips) window.__wireTips(document.getElementById('corrBody'));
     };
     window.__setCorr=function(mode){window.__corrMode=mode;window.__renderCorr();};
     window.__renderCorr();
@@ -595,24 +616,40 @@ document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('c
     document.querySelectorAll('#verdicts details.part').forEach(d=>{d.open=open;});
   };
 
-  /* ---------- skewness exhibit (figures rendered by the Python pipeline) ---------- */
+  /* ---------- skewness exhibit (figures rendered by the Python pipeline; tabbed) ---------- */
   const ex=document.getElementById('skewex');
   if(ex && DATA.skewfigs && DATA.skewfigs.length){
-    ex.innerHTML=`<div class="chooser" style="margin-top:20px">
-      <div class="chtitle">The skewness problem &mdash; why the classic tests were benched</div>
-      <p class="chintro">These three shapes are the reason this chapter reaches for rank-based tests: a t-test assumes a bell curve, and none of these is one. The figures are drawn by the Python statistics stage (matplotlib) from the cleaned data &mdash; this report only displays them; the exploration notebook regenerates them live.</p>
-      ${DATA.skewfigs.map(f=>`<figure class="skewfig">
-        <img src="${f.img}" alt="${f.title} distribution">
-        <figcaption><b>${f.title}</b> &mdash; <span class="tip" data-tip="<b>Skewness &mdash; the lopsidedness gauge.</b> What: 0 is a symmetric bell curve; positive means a long right tail of extremes. Why: classic tests assume near-symmetry and mislead when skew is high. Read: above 1 is decidedly skewed, above 3 is extreme.">skew ${f.skew}</span> &middot; mean ${f.mean} vs median ${f.median} &mdash; when the mean towers over the median, a handful of extremes is dragging it.</figcaption>
-      </figure>`).join('')}
-    </div>`;
+    window.__skewIdx=0;
+    window.__renderSkew=function(){
+      const i=window.__skewIdx, f=DATA.skewfigs[i];
+      ex.innerHTML=`<div class="chooser" style="margin-top:20px">
+        <div class="chtitle">The skewness problem &mdash; why the classic tests were benched</div>
+        <p class="chintro">These three shapes are the reason this chapter reaches for rank-based tests: a t-test assumes a bell curve, and none of these is one. The figures are drawn by the Python statistics stage (matplotlib) from the cleaned data &mdash; this report only displays them; the exploration notebook regenerates them live. One at a time, to keep the page clean &mdash; pick a distribution:</p>
+        <div class="corrbtns" style="margin:12px 0 0">
+          ${DATA.skewfigs.map((g,j)=>`<button class="${j===i?'on':''}" onclick="__skewTab(${j})">${g.title}</button>`).join('')}
+        </div>
+        <figure class="skewfig">
+          <img src="${f.img}" alt="${f.title} distribution">
+          <figcaption><b>${f.title}</b> &mdash; <span class="tip" data-tip="<b>Skewness &mdash; the lopsidedness gauge.</b> What: 0 is a symmetric bell curve; positive means a long right tail of extremes. Why: classic tests assume near-symmetry and mislead when skew is high. Read: above 1 is decidedly skewed, above 3 is extreme.">skew ${f.skew}</span> &middot; mean ${f.mean} vs median ${f.median} &mdash; when the mean towers over the median, a handful of extremes is dragging it.</figcaption>
+        </figure>
+      </div>`;
+      if(window.__wireTips) window.__wireTips(ex);
+    };
+    window.__skewTab=function(i){window.__skewIdx=i;window.__renderSkew();};
+    window.__renderSkew();
   }
 
-  /* ---------- hover-to-learn: wire every data-tip to the shared tooltip ---------- */
-  document.querySelectorAll('[data-tip]').forEach(el=>{
-    el.addEventListener('mousemove',ev=>showTip(el.getAttribute('data-tip'),ev));
-    el.addEventListener('mouseleave',hideTip);
-  });
+  /* ---------- hover-to-learn: wire every data-tip to the shared tooltip ----------
+     Re-runnable: renderers that replace DOM with new data-tip elements
+     (correlation toggle, skew tabs) call __wireTips again on their container. */
+  window.__wireTips=function(root){
+    (root||document).querySelectorAll('[data-tip]').forEach(el=>{
+      if(el.__tipped) return; el.__tipped=true;
+      el.addEventListener('mousemove',ev=>showTip(el.getAttribute('data-tip'),ev));
+      el.addEventListener('mouseleave',hideTip);
+    });
+  };
+  window.__wireTips();
 })();
 
 /* ---------- advocates table ---------- */

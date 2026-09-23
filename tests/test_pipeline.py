@@ -153,3 +153,16 @@ def test_correlation_matrix_wellformed():
                 assert -1.0 <= m[i][j] <= 1.0, f"{key} value out of [-1, 1]"
                 assert m[i][j] == m[j][i], f"{key} not symmetric"
     assert len(corr["strongest"]) >= 3, "strongest pairs not exported"
+
+
+def test_dashboard_teaching_elements():
+    """The statistics chapter must ship its interactive teaching apparatus intact."""
+    html = (ROOT / "dashboard.html").read_text()
+    for marker, meaning in [
+        ("taxstrip", "taxonomy strip of analysis types"),
+        ("__skewTab", "tabbed skewness exhibit"),
+        ("__wireTips", "re-runnable tooltip wiring"),
+        ("Kruskal-Wallis", "full method menu incl. benched methods"),
+        ("__toggleAll", "expand/collapse explanations"),
+    ]:
+        assert marker in html, f"dashboard lost its {meaning} ({marker!r} not found)"
