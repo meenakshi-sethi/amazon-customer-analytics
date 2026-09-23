@@ -62,7 +62,7 @@ python/04_statistics_and_modeling.py ← profiling + skew, Mann-Whitney U, chi-s
 python/03_build_dashboard.py      ← generates dashboard.html from exports (numbers can't drift)
 notebooks/exploration.ipynb       ← interactive layer over the exports (audit trail, segment
                                     profiles, sentiment gaps — uv run jupyter)
-tests/test_pipeline.py            ← 9 schema & invariant checks (pytest)
+tests/test_pipeline.py            ← 13 schema & invariant checks (pytest)
 ```
 
 **Statistical results (stage 4):**
@@ -96,7 +96,7 @@ uv sync
 .venv/bin/python python/03_build_dashboard.py            # regenerates dashboard.html
 
 # 4. Validate
-.venv/bin/python -m pytest tests/ -v                     # 9 checks, all must pass
+.venv/bin/python -m pytest tests/ -v                     # 13 checks, all must pass
 ```
 
 ---
@@ -115,7 +115,7 @@ uv sync
 │   ├── 03_build_dashboard.py
 │   └── 04_statistics_and_modeling.py
 ├── notebooks/exploration.ipynb  ← interactive layer over the exports (uv run jupyter)
-├── tests/test_pipeline.py      ← 9 schema & invariant checks
+├── tests/test_pipeline.py      ← 13 schema & invariant checks
 ├── docs/
 │   ├── figures/                ← distribution evidence (skew)
 │   └── interview_prep.md       ← STAR stories & defense answers
