@@ -167,6 +167,8 @@ def test_dashboard_teaching_elements():
         ("<details class=\"chooser\">", "collapsible method chooser"),
         ("href=\"#c1\"", "clickable taxonomy chips"),
         ("repolink", "masthead GitHub repo link"),
+        ("id=\"c7\"", "closing editorial chapter"),
+        ("edact", "finding-to-action pairing cards"),
     ]:
         assert marker in html, f"dashboard lost its {meaning} ({marker!r} not found)"
 

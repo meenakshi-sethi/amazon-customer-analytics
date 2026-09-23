@@ -282,7 +282,14 @@ TEMPLATE = r"""<!DOCTYPE html>
            padding:7px 11px;font-size:12.5px;font-family:Georgia,serif;display:none;z-index:50;
            white-space:nowrap;border-radius:2px}
   svg text{font-family:Georgia,serif}
-  @media(max-width:640px){.segrow{grid-template-columns:105px 1fr 80px}.toc{columns:1}}
+  /* editorial */
+  .edgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:20px 0}
+  .edcard{border:1px solid var(--rule);background:#faf6ee;padding:14px 16px}
+  .edfind{font-size:13.5px;line-height:1.55;margin-bottom:10px}
+  .edfind .edno{font-style:italic;font-weight:700;color:var(--gold);margin-right:4px}
+  .edact{font-size:13px;line-height:1.55;border-top:1px dashed var(--rule);padding-top:10px}
+  .edact b{color:var(--oxblood)}
+  @media(max-width:640px){.segrow{grid-template-columns:105px 1fr 80px}.toc{columns:1}.edgrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -314,6 +321,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     <a href="#c4"><span class="no">IV</span>When the stars lie</a>
     <a href="#c5"><span class="no">V</span>Does it hold up? — the statistics</a>
     <a href="#c6"><span class="no">VI</span>The advocate list</a>
+    <a href="#c7"><span class="no">VII</span>The editorial &mdash; findings &amp; actions</a>
   </nav>
   <div class="taxstrip">
     <a class="taxchip used tip" href="#c1" data-tip="<b>Descriptive analysis.</b> Summarizes what happened &mdash; averages, ranges, charts. No verdicts, just a clear picture. Takes you to Chapter I, the data audit.">Descriptive<span class="q">what happened?</span></a>
@@ -437,6 +445,59 @@ TEMPLATE = r"""<!DOCTYPE html>
     <p class="body">Advocates must be Champions or Loyal, have earned at least ten helpfulness votes, and write positive summaries at least 60% of the time. The advocacy score weighs helpfulness (50%), positivity (30%), and activity (20%). Click any column to re-sort.</p>
     <div style="overflow-x:auto"><table class="adv" id="advTable"></table></div>
     <p class="plainnote">In plain words: these are the thirty people most worth a thank-you note &mdash; the ones other shoppers already listen to, and who consistently have good things to say. A small rewards program aimed here reaches far beyond thirty people, because their reviews are read by thousands.</p>
+  </section>
+
+  <!-- ================= VII. EDITORIAL ================= -->
+  <section class="chap" id="c7">
+    <div class="chaphead"><span class="no">VII</span><h2>The editorial &mdash; findings and the actions they demand</h2>
+      <span class="tag label">Insights &rarr; action</span></div>
+    <p class="lede">Six chapters of evidence, distilled. Every finding below is paired with the decision it should trigger &mdash; because a number only earns its keep when it changes what somebody does on Monday morning.</p>
+
+    <div class="edgrid">
+
+      <div class="edcard">
+        <div class="edfind"><span class="edno">1.</span><b>A third of the raw data was fiction.</b> 174,521 of 568,454 rows (30.7%) were duplicates; the true corpus is 393,931 reviews from 256,059 customers.</div>
+        <div class="edact"><b>Action:</b> deduplicate before any KPI is computed. Metrics built on the raw file are inflated by up to a third, and the duplicate rate itself belongs on the data-quality dashboard so a silent pipeline regression can never hide.</div>
+      </div>
+
+      <div class="edcard">
+        <div class="edfind"><span class="edno">2.</span><b>Half the base writes exactly one review, ever.</b> The median customer leaves a single review (mean 1.54, skew 30.9); Casuals are 48% of all customers.</div>
+        <div class="edact"><b>Action:</b> stop spending on the base as if it were uniform. One-and-done reviewing is a fact of this marketplace, not a defect to fix &mdash; point budget at the segments where behavior is actually moveable: the recent, the lapsed-but-valuable, and the trusted.</div>
+      </div>
+
+      <div class="edcard">
+        <div class="edfind"><span class="edno">3.</span><b>14,714 At-Risk customers are proven, valuable, and silent.</b> They average 2.68 reviews, score 4.29, and have earned 114,031 helpfulness votes &mdash; but haven't been heard from in roughly three years (1,060 days).</div>
+        <div class="edact"><b>Action:</b> aim the first win-back campaign here. These are the cheapest revenue dollars in the file &mdash; preference demonstrated, influence earned, attention merely lapsed. A reactivation offer to this list outperforms the same spend on cold acquisition.</div>
+      </div>
+
+      <div class="edcard">
+        <div class="edfind"><span class="edno">4.</span><b>38,348 New &amp; Promising customers are warm right now.</b> Their median recency is just 146 days, but the reviewing habit hasn't yet formed.</div>
+        <div class="edact"><b>Action:</b> nudge for the second review or repurchase while the relationship is young &mdash; welcome flows, cross-category suggestions, and review prompts in the first months, when the odds of turning a one-time buyer into a repeat one are highest.</div>
+      </div>
+
+      <div class="edcard">
+        <div class="edfind"><span class="edno">5.</span><b>The stars lie 3% of the time &mdash; and that 3% matters.</b> 9,246 four- and five-star reviews carry negative text (avg polarity -0.33); overall, stars and words agree only 58.5% of the time.</div>
+        <div class="edact"><b>Action:</b> monitor text sentiment, not star averages. A star-only dashboard reports these customers as satisfied while their words say otherwise &mdash; route hidden-detractor reviews to CX follow-up as an early-warning channel, because text turns critical before ratings do.</div>
+      </div>
+
+      <div class="edcard">
+        <div class="edfind"><span class="edno">6.</span><b>Influence is earned by breadth, not volume.</b> In the regression (R&sup2; = 0.20, n = 256,059), reviewing more <i>products</i> raises helpfulness votes (+0.21, p &asymp; 10<sup>-42</sup>) while writing more reviews per se slightly lowers them (-0.10).</div>
+        <div class="edact"><b>Action:</b> to grow trusted reviewers, reward range. Programs that push review <i>count</i> manufacture noise; programs that encourage reviewing <i>different</i> products manufacture authority. Feature cross-category reviewers prominently.</div>
+      </div>
+
+      <div class="edcard">
+        <div class="edfind"><span class="edno">7.</span><b>At this scale, significance is cheap &mdash; effect size is the currency.</b> Champions vs. Casuals: p &asymp; 10<sup>-153</sup>, yet median helpfulness differs by 0.07. Segment vs. sentiment: p &asymp; 10<sup>-197</sup> with Cram&eacute;r's V = 0.035 &mdash; statistically real, practically thin.</div>
+        <div class="edact"><b>Action:</b> let effect sizes gate decisions, and size experiments honestly: detecting a 0.05 polarity shift at 80% power needs 1,238 reviews per group. Pre-register the minimum detectable effect before any A/B test, or practically invisible wins will steer strategy.</div>
+      </div>
+
+      <div class="edcard">
+        <div class="edfind"><span class="edno">8.</span><b>Thirty advocates carry outsized reach.</b> The advocate list isolates Champions and Loyal customers with 10+ helpfulness votes and consistently positive words &mdash; reviewers other shoppers already trust.</div>
+        <div class="edact"><b>Action:</b> activate the shortlist. A modest thank-you &mdash; early access, a badge, a free product &mdash; costs little and compounds, because their next reviews arrive pre-trusted by thousands of readers.</div>
+      </div>
+
+    </div>
+
+    <p class="plainnote">In plain words: clean the data before trusting it; listen to the words, not just the stars; spend where value is already proven &mdash; the lapsed champions and the warm newcomers; reward breadth over volume; and let effect sizes, not p-values, sign the checks. That is the whole drill, in one paragraph.</p>
   </section>
 
   <!-- ================= COLOPHON ================= -->
