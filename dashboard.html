@@ -125,6 +125,18 @@
   .segtag.Champions{color:var(--green);border-color:var(--green)}
   .segtag.Loyal{color:var(--blue);border-color:var(--blue)}
 
+  /* reader's guide primer */
+  .primer{margin:26px 0 8px;border:1px solid var(--rule);background:rgba(0,0,0,.025);
+          padding:20px 24px;border-radius:3px}
+  .primer h3{font-size:15px;margin:0 0 10px;letter-spacing:.02em}
+  .primer p{font-size:14px;line-height:1.65;margin:0 0 10px}
+  .primer p:last-child{margin-bottom:0}
+  .primer .term{font-weight:700}
+  .primer .plain{display:block;margin-top:14px;padding-top:12px;border-top:1px dashed var(--rule);
+                 font-size:13px;color:var(--muted);font-style:italic}
+  .plainnote{font-size:13.5px;color:var(--muted);border-left:3px solid var(--gold);
+             padding:6px 0 6px 14px;margin:16px 0 0;font-style:italic}
+
   /* colophon */
   .colophon{margin-top:60px;border-top:3px double var(--rule);padding-top:18px;
             font-size:13px;color:var(--muted)}
@@ -169,6 +181,16 @@
   </nav>
   <hr class="rule double">
 
+  <!-- ================= READER'S GUIDE (plain-language primer) ================= -->
+  <div class="primer">
+    <h3>Before you read on &mdash; a sixty-second guide for everyone</h3>
+    <p>This report was written to be read by <i>people</i>, not just analysts. Three ideas do most of the work here, and none of them requires a statistics background:</p>
+    <p><span class="term">1. Customer segmentation.</span> Imagine sorting every customer onto three scales: <b>how recently</b> they were last seen, <b>how often</b> they show up, and <b>how much value</b> they bring. Retailers call this <b>RFM</b> &mdash; Recency, Frequency, Monetary value &mdash; and it's been the standard way to sort customers since mail-order catalogues. Score everyone on each scale, and natural groups appear: your regulars, your newcomers, the ones drifting away.</p>
+    <p><span class="term">2. Why this report says R-F-E.</span> This dataset records reviews, not purchases &mdash; there is no price, no order value. Rather than invent a number that doesn't exist, the third scale swaps <i>money</i> for <i>engagement</i>: how many times other shoppers marked that customer's reviews as <b>helpful</b>. A customer whose opinions guide other buyers is valuable in a way money would miss anyway. The swap is stated openly &mdash; that's the honest version of the method.</p>
+    <p><span class="term">3. Sentiment, checked against the stars.</span> Software can read the <i>tone</i> of written words &mdash; positive, negative, or neutral. This report scores the tone of every review, then compares it with the star rating the same customer gave. When the words and the stars disagree, something interesting is hiding &mdash; a complainer behind five stars, or a fan behind one.</p>
+    <span class="plain">Everything else &mdash; the audit trail, the statistical tests &mdash; is just the evidence that these three ideas were applied carefully. Read the chapters in order; each one tells one part of the story.</span>
+  </div>
+
   <!-- ================= I. DATA QUALITY ================= -->
   <section class="chap" id="c1">
     <div class="chaphead"><span class="no">I</span><h2>The thirty percent that wasn't real</h2>
@@ -191,9 +213,10 @@
     <div class="chaphead"><span class="no">II</span><h2>Six kinds of customer</h2>
       <span class="tag label">R-F-E segmentation</span></div>
     <p class="lede">No revenue column exists in this data — so monetary value was replaced with engagement, and the model says so out loud.</p>
-    <p class="body">Each customer is scored on <b>Recency</b> and <b>Frequency</b> quintiles (SQL <i>NTILE</i> window functions), with <b>Engagement</b> — helpfulness votes earned — as the value proxy. The result is six CRM-standard segments. Click any bar for its profile.</p>
+    <p class="body">Every customer is placed on three scales from the guide above: <b>Recency</b> (days since their last review), <b>Frequency</b> (how many reviews they've written), and <b>Engagement</b> (helpfulness votes their reviews earned from other shoppers). Each scale is divided into five ranked bands &mdash; a <i>quintile</i> is simply "one fifth of the crowd," from the top fifth to the bottom fifth. Where the three bands intersect, six familiar customer personalities emerge. Click any bar for its profile.</p>
     <div id="segrows"></div>
     <div id="segDetail">Select a segment to read its profile.</div>
+    <p class="plainnote">In plain words: think of a caf&eacute; &mdash; Champions are the regulars at the corner table, Loyal are the weekly crowd, At Risk used to come daily but haven't been seen in a month, and Casual walked in once for a coffee to go. Each group needs a different kind of attention.</p>
   </section>
 
   <!-- ================= III. GROWTH ================= -->
@@ -208,6 +231,7 @@
     </div>
     <svg id="line" width="100%" height="250" viewBox="0 0 560 250" preserveAspectRatio="none"></svg>
     <p class="body" style="font-size:13.5px;color:var(--muted)">The widening gap between new and active reviewers in 2011–12 is the retention story: acquisition outpaced repeat participation.</p>
+    <p class="plainnote">In plain words: the shop got busier every year, but more and more of the crowd were first-timers who never came back. Growth that relies on strangers walking in &mdash; rather than regulars returning &mdash; is expensive growth.</p>
   </section>
 
   <!-- ================= IV. SENTIMENT GAP ================= -->
@@ -226,6 +250,7 @@
         <div class="t">hidden advocates — one or two stars, but positive words (avg polarity +0.44). Often rating the delivery, not the food. Recovery-win candidates.</div>
       </div>
     </div>
+    <p class="plainnote">In plain words: if you only watch the star ratings, roughly one in every thirty "happy" customers is actually writing complaints &mdash; and nearly ten thousand unhappy-looking ratings were written by people whose words were warm. The stars are a summary; the words are the story.</p>
   </section>
 
   <!-- ================= V. STATISTICS ================= -->
@@ -235,6 +260,7 @@
     <p class="lede">A dashboard suggests; statistics testify. Every claim above was taken to court — non-parametric where the data refused to be normal.</p>
     <div id="verdicts"></div>
     <p class="body" style="font-size:13.5px;color:var(--muted)">Why non-parametric? Reviews-per-customer skews past 12, helpfulness votes are log-log skewed, and polarity is bounded and tri-modal. The t-test's normality assumption fails on all three — so Mann-Whitney U and chi-square carry the case.</p>
+    <p class="plainnote">In plain words: some of these numbers are extremely lopsided &mdash; a handful of customers write hundreds of reviews while most write one. Classic tests assume nicely balanced data, so they'd give misleading answers here. The tests used instead are the ones built for lopsided data. And the surprise finding: the most prolific reviewers are <i>not</i> the most trusted &mdash; shoppers trust a review a bit less, on average, from someone who writes them constantly. Quality, not quantity, earns trust.</p>
   </section>
 
   <!-- ================= VI. ADVOCATES ================= -->
@@ -244,6 +270,7 @@
     <p class="lede">Thirty customers worth a thank-you: engaged, trusted by peers, and consistently positive in their own words.</p>
     <p class="body">Advocates must be Champions or Loyal, have earned at least ten helpfulness votes, and write positive summaries at least 60% of the time. The advocacy score weighs helpfulness (50%), positivity (30%), and activity (20%). Click any column to re-sort.</p>
     <div style="overflow-x:auto"><table class="adv" id="advTable"></table></div>
+    <p class="plainnote">In plain words: these are the thirty people most worth a thank-you note &mdash; the ones other shoppers already listen to, and who consistently have good things to say. A small rewards program aimed here reaches far beyond thirty people, because their reviews are read by thousands.</p>
   </section>
 
   <!-- ================= COLOPHON ================= -->
@@ -252,6 +279,7 @@
     <p>Compiled by Meenakshi Sethi &middot; System Analyst, Expert Technology Services (ETSAZ).</p>
     <p style="margin-top:8px">Method: SQLite audit &amp; segmentation SQL (single source of truth) &rarr; Python pipeline (pandas, TextBlob, scipy, statsmodels) under a seeded, uv-managed environment &rarr; this page, generated programmatically from the pipeline's exports. 568,454 raw reviews &rarr; 393,931 clean (30.7% duplicates and 2 invalid rows removed, every decision logged). Validated by a pytest suite of schema and invariant checks.</p>
     <p style="margin-top:8px">Source: Amazon Fine Food Reviews (Kaggle / SNAP). This journal is a portfolio artifact; customer identifiers are pseudonymous as shipped in the public dataset.</p>
+    <p style="margin-top:8px"><b>Replicate this report:</b> the raw data is <a href="https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews" style="color:var(--gold)">freely downloadable from Kaggle</a>; the aggregate results ship with the repository (<i>exports/</i>), and the full pipeline &mdash; SQL, Python, tests &mdash; regenerates every number on this page from the raw file in under ten minutes.</p>
   </div>
 </div>
 <div id="tooltip"></div>
