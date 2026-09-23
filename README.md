@@ -78,6 +78,7 @@ Zero hard-coding: all thresholds live in `CONFIG` blocks at the top of each scri
 
 ```bash
 # 1. Get the data: Kaggle "Amazon Fine Food Reviews" → database.sqlite
+#    https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews
 #    (place it anywhere, then point the pipeline at it)
 export AMAZON_DB=/path/to/database.sqlite   # default: ../Amazon/database.sqlite
 
@@ -132,4 +133,4 @@ The 356 MB raw database and the 37 MB review-level export are **gitignored** —
 
 ## License
 
-MIT — see [LICENSE](LICENSE). Data: Amazon Fine Food Reviews (Kaggle / SNAP), used under its public research terms.
+MIT — see [LICENSE](LICENSE). Data: [Amazon Fine Food Reviews](https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews) (Kaggle / SNAP), used under its public research terms.
