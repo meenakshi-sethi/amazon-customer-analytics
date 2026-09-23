@@ -172,6 +172,11 @@ def test_dashboard_teaching_elements():
     ]:
         assert marker in html, f"dashboard lost its {meaning} ({marker!r} not found)"
 
-    # The repo URL placeholder must always be replaced at build time.
-    assert "__REPO_URL__" not in html, "dashboard shipped with an unreplaced __REPO_URL__ placeholder"
+    # Placeholders must always be replaced at build time.
+    for ph in ("__REPO_URL__", "__N_RAW__", "__N_CUST__", "__DATE_MIN__", "__DATE_MAX__", "__N_YEARS__"):
+        assert ph not in html, f"dashboard shipped with an unreplaced {ph} placeholder"
     assert html.count('href="https://github.com/') >= 2, "expected repo links in both masthead and colophon"
+    # The masthead scale must match the pipeline's own KPI export (no drift).
+    kpis = json.loads((EXPORTS / "kpis.json").read_text())
+    assert f"{kpis['raw_reviews']:,} reviews" in html, "tagline raw-review count drifted from kpis.json"
+    assert f"{kpis['customers']:,} customers" in html, "tagline customer count drifted from kpis.json"

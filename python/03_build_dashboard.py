@@ -16,6 +16,7 @@ Run:  .venv/bin/python python/03_build_dashboard.py
 """
 
 import json
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -300,12 +301,11 @@ TEMPLATE = r"""<!DOCTYPE html>
   <div class="masthead">
     <div class="label">Customer Intelligence Ledger &middot; Amazon Fine Food Reviews</div>
     <h1>The Fine Food<br>Review Files</h1>
-    <p class="tagline">A retention &amp; advocacy investigation across 568,454 reviews, 256,059 customers, thirteen years</p>
+    <p class="tagline">A retention &amp; advocacy investigation across __N_RAW__ reviews, __N_CUST__ customers, __N_YEARS__ years</p>
     <div class="edition">
-      <span>Vol. I &middot; No. 1</span>
-      <span>Data cut: Oct 1999 &ndash; Oct 2012</span>
+      <span>Vol. I &middot; No. 1 &middot; Data cut: __DATE_MIN__ &ndash; __DATE_MAX__</span>
       <span>SQL &middot; Python &middot; Statistics</span>
-      <span><a class="repolink" href="__REPO_URL__">&#9670; Code &amp; methodology on GitHub</a></span>
+      <span><a class="repolink" href="__REPO_URL__">Code &amp; methodology on GitHub &#8599;</a></span>
     </div>
   </div>
 
@@ -826,7 +826,22 @@ renderAdv();
 </html>
 """
 
-html = TEMPLATE.replace("__DATA_JSON__", json.dumps(DATA)).replace("__REPO_URL__", REPO_URL)
+_dmin = datetime.strptime(kpis["date_min"], "%Y-%m-%d")
+_dmax = datetime.strptime(kpis["date_max"], "%Y-%m-%d")
+_WORDS = {1: "one", 2: "two", 3: "three", 4: "four", 5: "five", 6: "six", 7: "seven",
+          8: "eight", 9: "nine", 10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen",
+          14: "fourteen", 15: "fifteen", 16: "sixteen", 17: "seventeen", 18: "eighteen",
+          19: "nineteen", 20: "twenty"}
+_span_years = _dmax.year - _dmin.year
+html = (
+    TEMPLATE.replace("__DATA_JSON__", json.dumps(DATA))
+    .replace("__REPO_URL__", REPO_URL)
+    .replace("__N_RAW__", f"{kpis['raw_reviews']:,}")
+    .replace("__N_CUST__", f"{kpis['customers']:,}")
+    .replace("__DATE_MIN__", _dmin.strftime("%b %Y"))
+    .replace("__DATE_MAX__", _dmax.strftime("%b %Y"))
+    .replace("__N_YEARS__", _WORDS.get(_span_years, str(_span_years)))
+)
 OUT.write_text(html, encoding="utf-8")
 print(f"Dashboard written: {OUT}  ({OUT.stat().st_size / 1024:.0f} KB)")
 print("Editorial edition — open in any browser. Fully self-contained.")
