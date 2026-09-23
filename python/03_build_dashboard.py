@@ -147,11 +147,20 @@ TEMPLATE = r"""<!DOCTYPE html>
   .verdict .q{font-style:italic;color:var(--muted);font-size:14px;margin-bottom:10px}
   .verdict .row{display:flex;gap:26px;flex-wrap:wrap;font-size:14px;margin-top:6px;
                 font-variant-numeric:tabular-nums}
-  .verdict .part{margin-top:12px;font-size:14px;line-height:1.6}
-  .verdict .part .plabel{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10px;
+  .verdict .part{margin-top:10px;font-size:14px;line-height:1.6}
+  .verdict details.part{border:1px solid var(--rule);background:#faf6ee;margin-top:10px}
+  .verdict summary.plabel{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10px;
            letter-spacing:.1em;text-transform:uppercase;color:var(--gold);
-           display:block;margin-bottom:3px;font-weight:700}
-  .verdict .part.helps .plabel{color:var(--green)}
+           display:flex;align-items:center;gap:8px;font-weight:700;
+           padding:9px 12px;cursor:pointer;list-style:none;user-select:none}
+  .verdict summary.plabel::-webkit-details-marker{display:none}
+  .verdict summary.plabel::after{content:'+';margin-left:auto;font-size:15px;
+           font-weight:400;color:var(--gold)}
+  .verdict details[open] summary.plabel::after{content:'\2212'}
+  .verdict details.part:hover{border-color:var(--gold)}
+  .verdict details.part.helps summary.plabel{color:var(--green)}
+  .verdict details.part.helps summary.plabel::after{color:var(--green)}
+  .verdict .ptext{padding:2px 12px 11px;font-size:14px;line-height:1.6}
   /* method chooser table (chapter V) */
   .chooser{border:1px solid var(--rule);background:#faf6ee;padding:20px 22px;margin:22px 0}
   .chooser .chtitle{font-family:'Playfair Display',Georgia,serif;font-size:19px;font-weight:700;margin-bottom:6px}
@@ -342,6 +351,11 @@ TEMPLATE = r"""<!DOCTYPE html>
         <tr><td>What drives one outcome?</td><td>Many quantities &rarr; one outcome</td><td>Regression (OLS)</td><td>&#10003; anatomy of influence</td></tr>
         <tr><td>How big must an experiment be?</td><td>A planned A/B test</td><td>Power analysis</td><td>&#10003; sizing the next test</td></tr>
       </table>
+      <div class="corrbtns" style="margin:14px 0 0">
+        <button onclick="__toggleAll(true)">Expand all explanations</button>
+        <button onclick="__toggleAll(false)">Collapse all</button>
+        <span style="font-size:11.5px;color:var(--muted);align-self:center;margin-left:4px">the numbers stay visible &mdash; the teaching unfolds on click</span>
+      </div>
     </div>
     <div id="verdicts"></div>
     <p class="body" style="font-size:13.5px;color:var(--muted)">Why non-parametric? Reviews-per-customer skews past 12, helpfulness votes are log-log skewed, and polarity is bounded and tri-modal. The t-test's normality assumption fails on all three — so Mann-Whitney U and chi-square carry the case.</p>
@@ -538,16 +552,13 @@ document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('c
       <span>p <b>${mw.p_value.toExponential(2)}</b></span>
       <span>medians <b>${mw.median[0]} vs ${mw.median[1]}</b></span>
       <span>n <b>${mw.n[0].toLocaleString()} vs ${mw.n[1].toLocaleString()}</b></span></div>
-    <div class="part"><span class="plabel">Why this technique</span>
-      We wanted to know whether two groups &mdash; the most engaged customers and the casual ones &mdash; are trusted differently by other shoppers. The usual test (a t-test) compares averages, but it only works on well-balanced data; helpfulness scores here are heavily lopsided, so it would have given a misleading answer. Mann-Whitney U compares <i>rankings</i> instead of averages &mdash; "do the reviews of one group tend to sit higher than the other's?" &mdash; which stays honest on lopsided data.</div>
-    <div class="part"><span class="plabel">What the numbers say</span>
-      The p-value is the probability of seeing a gap this big if the two groups were truly identical. Anything under the standard threshold of <b>0.05</b> counts as a real difference; ours is far below it. The medians (the "typical" score, unaffected by extremes) give the direction: ${mw.significant ? (mw.median[0] > mw.median[1]
+    <details class="partNone"><summary class="plabel">Why this technique</summary><div class="ptext">      We wanted to know whether two groups &mdash; the most engaged customers and the casual ones &mdash; are trusted differently by other shoppers. The usual test (a t-test) compares averages, but it only works on well-balanced data; helpfulness scores here are heavily lopsided, so it would have given a misleading answer. Mann-Whitney U compares <i>rankings</i> instead of averages &mdash; "do the reviews of one group tend to sit higher than the other's?" &mdash; which stays honest on lopsided data.</div></details>
+    <details class="partNone"><summary class="plabel">What the numbers say</summary><div class="ptext">      The p-value is the probability of seeing a gap this big if the two groups were truly identical. Anything under the standard threshold of <b>0.05</b> counts as a real difference; ours is far below it. The medians (the "typical" score, unaffected by extremes) give the direction: ${mw.significant ? (mw.median[0] > mw.median[1]
         ? `${mw.groups[0]} reviewers earn a higher typical trust score (${mw.median[0]} vs ${mw.median[1]}).`
-        : `casual reviewers actually earn a slightly higher typical trust score (${mw.median[1]} vs ${mw.median[0]}) &mdash; the opposite of the obvious guess.`) : 'no detectable difference.'}</div>
-    <div class="part helps"><span class="plabel">How this helps</span>
-      ${mw.significant && mw.median[0] <= mw.median[1]
+        : `casual reviewers actually earn a slightly higher typical trust score (${mw.median[1]} vs ${mw.median[0]}) &mdash; the opposite of the obvious guess.`) : 'no detectable difference.'}</div></details>
+    <details class="part helps"><summary class="plabel">How this helps</summary><div class="ptext">      ${mw.significant && mw.median[0] <= mw.median[1]
         ? 'It kills a common assumption before it becomes strategy: "reward our most prolific reviewers" would not buy trust. A reviewer-incentive program should aim at review <i>quality</i>, not volume &mdash; otherwise the budget goes to people whose opinions carry less weight each time they post.'
-        : 'It confirms engagement and trust travel together &mdash; the customers who show up most are also the ones other shoppers listen to, so programs aimed at engaged customers get double leverage.'}</div>
+        : 'It confirms engagement and trust travel together &mdash; the customers who show up most are also the ones other shoppers listen to, so programs aimed at engaged customers get double leverage.'}</div></details>
   </div>
   <div class="verdict"><span class="stamp${ch.significant?'':' neg'}">${ch.significant?yes:no}</span>
     <h3>Chi-square — sentiment &times; segment</h3>
@@ -555,12 +566,9 @@ document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('c
     <div class="row"><span>&chi;&sup2; <b>${ch.chi2.toLocaleString()}</b></span>
       <span>dof <b>${ch.dof}</b></span><span>p <b>${ch.p_value.toExponential(2)}</b></span>
       <span>Cram&eacute;r's V <b>${ch.cramers_v}</b> (${ch.effect_label})</span></div>
-    <div class="part"><span class="plabel">Why this technique</span>
-      We wanted to know whether a customer's segment (regular, newcomer, drifting away&hellip;) has any bearing on the <i>tone</i> of what they write. Both are categories, not quantities &mdash; you can't average "Champion" or "Positive" &mdash; so the test that fits is the one built for counting: does the mix of tones differ from segment to segment more than chance would allow?</div>
-    <div class="part"><span class="plabel">What the numbers say</span>
-      The p-value (again: probability of a pattern this strong appearing by pure chance; threshold <b>0.05</b>) says the relationship is real. But Cram&eacute;r's V &mdash; a 0-to-1 strength gauge where under 0.1 is weak, 0.3 is moderate &mdash; measures <b>${ch.cramers_v}</b>: real, but ${ch.effect_label}. Segment tells you something about tone, just not very much.</div>
-    <div class="part helps"><span class="plabel">How this helps</span>
-      It sets fair expectations for targeting: segmenting customers is useful for <i>who</i> to contact, but it shouldn't be the only basis for <i>what</i> to say &mdash; tone varies too much within each group. Read the words, not just the label.</div>
+    <details class="partNone"><summary class="plabel">Why this technique</summary><div class="ptext">      We wanted to know whether a customer's segment (regular, newcomer, drifting away&hellip;) has any bearing on the <i>tone</i> of what they write. Both are categories, not quantities &mdash; you can't average "Champion" or "Positive" &mdash; so the test that fits is the one built for counting: does the mix of tones differ from segment to segment more than chance would allow?</div></details>
+    <details class="partNone"><summary class="plabel">What the numbers say</summary><div class="ptext">      The p-value (again: probability of a pattern this strong appearing by pure chance; threshold <b>0.05</b>) says the relationship is real. But Cram&eacute;r's V &mdash; a 0-to-1 strength gauge where under 0.1 is weak, 0.3 is moderate &mdash; measures <b>${ch.cramers_v}</b>: real, but ${ch.effect_label}. Segment tells you something about tone, just not very much.</div></details>
+    <details class="part helps"><summary class="plabel">How this helps</summary><div class="ptext">      It sets fair expectations for targeting: segmenting customers is useful for <i>who</i> to contact, but it shouldn't be the only basis for <i>what</i> to say &mdash; tone varies too much within each group. Read the words, not just the label.</div></details>
   </div>
   <div class="verdict"><span class="stamp">R&sup2; ${ol.r_squared}</span>
     <h3>OLS regression — the anatomy of influence</h3>
@@ -568,12 +576,9 @@ document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('c
     <div class="row"><span>n <b>${ol.n.toLocaleString()}</b></span>
       <span>adj-R&sup2; <b>${ol.adj_r_squared}</b></span>
       <span>F p <b>${ol.f_p_value.toExponential(2)}</b></span></div>
-    <div class="part"><span class="plabel">Why this technique</span>
-      The question here is "what actually <i>drives</i> influence &mdash; the votes a customer's reviews earn?" Regression is the tool that weighs several possible drivers at once and tells you which ones still matter after accounting for the others. One honest adjustment first: vote counts are extremely lopsided (a few customers earn thousands, most earn none), so the model works on a <i>logarithmic</i> scale &mdash; the same trick that turns a sprint of a few superstars into a fair race across everyone.</div>
-    <div class="part"><span class="plabel">What the numbers say</span>
-      Each driver gets a coefficient (&beta;) &mdash; its independent push on influence &mdash; and a p-value testing whether that push is distinguishable from zero (threshold <b>0.05</b>). The significant drivers: ${sigCoefs.map(c=>`${c.name} (&beta;=${c.coef}, p=${c.p_value.toExponential(1)})`).join(' &middot; ')}. Adjusted R&sup2; = <b>${ol.adj_r_squared}</b> means these four factors together explain about ${Math.round(ol.adj_r_squared*100)}% of why some customers earn far more votes than others &mdash; solid for behavior data, and honest about the rest being unmeasured factors.</div>
-    <div class="part helps"><span class="plabel">How this helps</span>
-      It turns "who is influential?" from a guess into a checklist. Want more trusted reviewers? The coefficients say which levers actually move influence and which are noise &mdash; so an engagement program can be built on the drivers that provably matter.</div>
+    <details class="partNone"><summary class="plabel">Why this technique</summary><div class="ptext">      The question here is "what actually <i>drives</i> influence &mdash; the votes a customer's reviews earn?" Regression is the tool that weighs several possible drivers at once and tells you which ones still matter after accounting for the others. One honest adjustment first: vote counts are extremely lopsided (a few customers earn thousands, most earn none), so the model works on a <i>logarithmic</i> scale &mdash; the same trick that turns a sprint of a few superstars into a fair race across everyone.</div></details>
+    <details class="partNone"><summary class="plabel">What the numbers say</summary><div class="ptext">      Each driver gets a coefficient (&beta;) &mdash; its independent push on influence &mdash; and a p-value testing whether that push is distinguishable from zero (threshold <b>0.05</b>). The significant drivers: ${sigCoefs.map(c=>`${c.name} (&beta;=${c.coef}, p=${c.p_value.toExponential(1)})`).join(' &middot; ')}. Adjusted R&sup2; = <b>${ol.adj_r_squared}</b> means these four factors together explain about ${Math.round(ol.adj_r_squared*100)}% of why some customers earn far more votes than others &mdash; solid for behavior data, and honest about the rest being unmeasured factors.</div></details>
+    <details class="part helps"><summary class="plabel">How this helps</summary><div class="ptext">      It turns "who is influential?" from a guess into a checklist. Want more trusted reviewers? The coefficients say which levers actually move influence and which are noise &mdash; so an engagement program can be built on the drivers that provably matter.</div></details>
   </div>
   <div class="verdict"><span class="stamp">n &ge; ${pw.n_per_group.toLocaleString()}</span>
     <h3>Power analysis — sizing the next experiment</h3>
@@ -581,12 +586,9 @@ document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('c
     <div class="row"><span>MDE <b>${pw.mde}</b></span><span>Cohen's d <b>${pw.cohens_d}</b></span>
       <span>&alpha; <b>${pw.alpha}</b></span><span>power <b>${pw.power}</b></span>
       <span>per group <b>${pw.n_per_group.toLocaleString()}</b></span></div>
-    <div class="part"><span class="plabel">Why this technique</span>
-      Before anyone runs an experiment &mdash; say, testing whether a new review form makes feedback warmer &mdash; someone has to decide how long to run it. Run it too short and a real improvement goes undetected; run it too long and budget is burned proving what was already clear. Power analysis does that arithmetic <i>before</i> the experiment, not after.</div>
-    <div class="part"><span class="plabel">What the numbers say</span>
-      The smallest change worth detecting is a shift of <b>${pw.mde}</b> on the sentiment scale. With the standard safety settings &mdash; at most a <b>${pw.alpha}</b> risk of a false alarm, and at least a <b>${Math.round(pw.power*100)}%</b> chance of catching a real effect &mdash; each group needs <b>${pw.n_per_group.toLocaleString()}</b> reviews. Cohen's d (${pw.cohens_d}) is simply that change expressed in units of the data's natural wobble: small effects need big samples.</div>
-    <div class="part helps"><span class="plabel">How this helps</span>
-      It's the difference between "we ran a test" and "we ran a test that could actually answer the question." Any A/B test on review sentiment now has a pre-computed sample size &mdash; the experiment can be scheduled and budgeted, not guessed.</div>
+    <details class="partNone"><summary class="plabel">Why this technique</summary><div class="ptext">      Before anyone runs an experiment &mdash; say, testing whether a new review form makes feedback warmer &mdash; someone has to decide how long to run it. Run it too short and a real improvement goes undetected; run it too long and budget is burned proving what was already clear. Power analysis does that arithmetic <i>before</i> the experiment, not after.</div></details>
+    <details class="partNone"><summary class="plabel">What the numbers say</summary><div class="ptext">      The smallest change worth detecting is a shift of <b>${pw.mde}</b> on the sentiment scale. With the standard safety settings &mdash; at most a <b>${pw.alpha}</b> risk of a false alarm, and at least a <b>${Math.round(pw.power*100)}%</b> chance of catching a real effect &mdash; each group needs <b>${pw.n_per_group.toLocaleString()}</b> reviews. Cohen's d (${pw.cohens_d}) is simply that change expressed in units of the data's natural wobble: small effects need big samples.</div></details>
+    <details class="part helps"><summary class="plabel">How this helps</summary><div class="ptext">      It's the difference between "we ran a test" and "we ran a test that could actually answer the question." Any A/B test on review sentiment now has a pre-computed sample size &mdash; the experiment can be scheduled and budgeted, not guessed.</div></details>
   </div>
   <div class="verdict"><span class="stamp">&minus;1 to +1</span>
     <h3>Correlation matrix &mdash; which behaviors travel together</h3>
@@ -599,12 +601,9 @@ document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('c
       <thead><tr><th></th>${co.variables.map(x=>`<th>${x}</th>`).join('')}</tr></thead>
       <tbody id="corrBody"></tbody>
     </table></div>
-    <div class="part"><span class="plabel">Why this technique</span>
-      Chi-square answers questions about <i>categories</i>; the correlation matrix is its counterpart for <i>quantities</i> &mdash; how strongly two numbers move together, every pair at once. We run it twice: Pearson hunts for straight-line links, Spearman asks only "when one rises, does the other tend to rise?" &mdash; which stays honest on lopsided data like vote counts.</div>
-    <div class="part"><span class="plabel">What the numbers say</span>
-      Each cell runs from &minus;1 (move opposite) through 0 (unrelated) to +1 (lockstep). Rough guide: under 0.1 negligible, 0.1&ndash;0.3 weak, 0.3&ndash;0.5 moderate, above 0.5 strong. The strongest pairs here: ${co.strongest.map(s=>`${s.a} &times; ${s.b} (&rho;=${s.rho>=0?'+':''}${s.rho})`).join(' &middot; ')}. Warm cells move together, blue cells move opposite, and the pale diagonal is simply each behavior against itself.</div>
-    <div class="part helps"><span class="plabel">How this helps</span>
-      It's the fastest honesty check on the regression above: pairs that correlate strongly are the ones you'd expect to matter, and pairs near zero warn you not to force a story onto them. It also flags redundancy &mdash; two behaviors measuring nearly the same thing &mdash; before they quietly distort a model.</div>
+    <details class="partNone"><summary class="plabel">Why this technique</summary><div class="ptext">      Chi-square answers questions about <i>categories</i>; the correlation matrix is its counterpart for <i>quantities</i> &mdash; how strongly two numbers move together, every pair at once. We run it twice: Pearson hunts for straight-line links, Spearman asks only "when one rises, does the other tend to rise?" &mdash; which stays honest on lopsided data like vote counts.</div></details>
+    <details class="partNone"><summary class="plabel">What the numbers say</summary><div class="ptext">      Each cell runs from &minus;1 (move opposite) through 0 (unrelated) to +1 (lockstep). Rough guide: under 0.1 negligible, 0.1&ndash;0.3 weak, 0.3&ndash;0.5 moderate, above 0.5 strong. The strongest pairs here: ${co.strongest.map(s=>`${s.a} &times; ${s.b} (&rho;=${s.rho>=0?'+':''}${s.rho})`).join(' &middot; ')}. Warm cells move together, blue cells move opposite, and the pale diagonal is simply each behavior against itself.</div></details>
+    <details class="part helps"><summary class="plabel">How this helps</summary><div class="ptext">      It's the fastest honesty check on the regression above: pairs that correlate strongly are the ones you'd expect to matter, and pairs near zero warn you not to force a story onto them. It also flags redundancy &mdash; two behaviors measuring nearly the same thing &mdash; before they quietly distort a model.</div></details>
   </div>`;
 
   /* ---------- correlation heatmap rendering ---------- */
@@ -629,6 +628,9 @@ document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('c
     window.__setCorr=function(mode){window.__corrMode=mode;window.__renderCorr();};
     window.__renderCorr();
   }
+  window.__toggleAll=function(open){
+    document.querySelectorAll('#verdicts details.part').forEach(d=>{d.open=open;});
+  };
 })();
 
 /* ---------- advocates table ---------- */
