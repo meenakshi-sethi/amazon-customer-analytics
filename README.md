@@ -3,6 +3,9 @@
 
 **By Meenakshi Sethi · System Analyst, Expert Technology Services (ETSAZ)**
 
+<!-- TODO: after pushing to GitHub, replace your-username with the real account name -->
+**Repository:** <https://github.com/your-username/amazon-customer-analytics> — full pipeline: SQL, Python, notebook, tests, and this dashboard, all reproducible from the raw Kaggle file.
+
 An end-to-end customer analytics investigation over **568,454 Amazon fine-food reviews (Oct 1999 – Oct 2012)**: SQL-driven data quality enforcement, RF-E customer segmentation, validated sentiment analysis, inferential statistics, and an activation-ready advocate shortlist — delivered as a reproducible pipeline and an interactive, zero-dependency [dashboard](dashboard.html).
 
 > **Read the deliverable first:** open [`dashboard.html`](dashboard.html) — an editorial-style interactive journal generated programmatically from the pipeline's exports. A Tableau Public edition is in preparation.

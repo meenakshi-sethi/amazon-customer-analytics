@@ -166,5 +166,10 @@ def test_dashboard_teaching_elements():
         ("__toggleAll", "expand/collapse explanations"),
         ("<details class=\"chooser\">", "collapsible method chooser"),
         ("href=\"#c1\"", "clickable taxonomy chips"),
+        ("repolink", "masthead GitHub repo link"),
     ]:
         assert marker in html, f"dashboard lost its {meaning} ({marker!r} not found)"
+
+    # The repo URL placeholder must always be replaced at build time.
+    assert "__REPO_URL__" not in html, "dashboard shipped with an unreplaced __REPO_URL__ placeholder"
+    assert html.count('href="https://github.com/') >= 2, "expected repo links in both masthead and colophon"

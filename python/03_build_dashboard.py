@@ -24,6 +24,10 @@ ROOT = Path(__file__).resolve().parents[1]
 EXPORTS = ROOT / "exports"
 OUT = ROOT / "dashboard.html"
 
+# TODO: after creating the GitHub repo, replace with the real URL
+# (and update the matching link in README.md).
+REPO_URL = "https://github.com/your-username/amazon-customer-analytics"
+
 kpis = json.loads((EXPORTS / "kpis.json").read_text())
 segments = pd.read_csv(EXPORTS / "segment_summary.csv").to_dict("records")
 monthly = pd.read_csv(EXPORTS / "monthly_activity.csv").to_dict("records")
@@ -97,6 +101,8 @@ TEMPLATE = r"""<!DOCTYPE html>
            border-bottom:1px solid var(--ink);padding:6px 2px;margin-top:22px}
   .edition span{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10.5px;letter-spacing:.18em;
                 text-transform:uppercase;color:var(--ink)}
+  .edition a.repolink{color:var(--gold);text-decoration:none;border-bottom:1px solid var(--gold)}
+  .edition a.repolink:hover{color:var(--ink);border-bottom-color:var(--ink)}
 
   /* toc */
   .toc{margin:30px 0 8px;columns:2;column-gap:40px}
@@ -292,6 +298,7 @@ TEMPLATE = r"""<!DOCTYPE html>
       <span>Vol. I &middot; No. 1</span>
       <span>Data cut: Oct 1999 &ndash; Oct 2012</span>
       <span>SQL &middot; Python &middot; Statistics</span>
+      <span><a class="repolink" href="__REPO_URL__">&#9670; Code &amp; methodology on GitHub</a></span>
     </div>
   </div>
 
@@ -438,7 +445,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     <p>Compiled by Meenakshi Sethi &middot; System Analyst, Expert Technology Services (ETSAZ).</p>
     <p style="margin-top:8px">Method: SQLite audit &amp; segmentation SQL (single source of truth) &rarr; Python pipeline (pandas, TextBlob, scipy, statsmodels) under a seeded, uv-managed environment &rarr; this page, generated programmatically from the pipeline's exports. 568,454 raw reviews &rarr; 393,931 clean (30.7% duplicates and 2 invalid rows removed, every decision logged). Validated by a pytest suite of schema and invariant checks.</p>
     <p style="margin-top:8px">Source: Amazon Fine Food Reviews (Kaggle / SNAP). This journal is a portfolio artifact; customer identifiers are pseudonymous as shipped in the public dataset.</p>
-    <p style="margin-top:8px"><b>Replicate this report:</b> the raw data is <a href="https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews" style="color:var(--gold)">freely downloadable from Kaggle</a>; the aggregate results ship with the repository (<i>exports/</i>), and the full pipeline &mdash; SQL, Python, tests &mdash; regenerates every number on this page from the raw file in under ten minutes.</p>
+    <p style="margin-top:8px"><b>Replicate this report:</b> the raw data is <a href="https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews" style="color:var(--gold)">freely downloadable from Kaggle</a>; the aggregate results ship with the repository (<i>exports/</i>), and the full pipeline &mdash; SQL, Python, tests &mdash; lives in the <a href="__REPO_URL__" style="color:var(--gold)">GitHub repository</a> and regenerates every number on this page from the raw file in under ten minutes.</p>
   </div>
 </div>
 <div id="tooltip"></div>
@@ -758,7 +765,7 @@ renderAdv();
 </html>
 """
 
-html = TEMPLATE.replace("__DATA_JSON__", json.dumps(DATA))
+html = TEMPLATE.replace("__DATA_JSON__", json.dumps(DATA)).replace("__REPO_URL__", REPO_URL)
 OUT.write_text(html, encoding="utf-8")
 print(f"Dashboard written: {OUT}  ({OUT.stat().st_size / 1024:.0f} KB)")
 print("Editorial edition — open in any browser. Fully self-contained.")
