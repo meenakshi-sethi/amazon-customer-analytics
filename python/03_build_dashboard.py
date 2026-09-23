@@ -86,7 +86,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   body{background:var(--paper);color:var(--ink);
        font-family:Georgia,'Times New Roman',serif;line-height:1.65;font-size:16px}
   #progress{position:fixed;top:0;left:0;height:3px;background:var(--oxblood);width:0%;z-index:99}
-  .sheet{max-width:860px;margin:0 auto;padding:48px 24px 80px}
+  .sheet{max-width:1180px;margin:0 auto;padding:48px 42px 80px}
   .label{font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;letter-spacing:.22em;
          text-transform:uppercase;color:var(--muted)}
   .rule{border:none;border-top:1px solid var(--rule);margin:26px 0}
@@ -94,7 +94,7 @@ TEMPLATE = r"""<!DOCTYPE html>
 
   /* masthead */
   .masthead{text-align:center}
-  .masthead h1{font-size:clamp(34px,6vw,54px);font-weight:700;letter-spacing:-.5px;line-height:1.08;margin:10px 0 6px}
+  .masthead h1{font-size:clamp(34px,5vw,62px);font-weight:700;letter-spacing:-.5px;line-height:1.08;margin:10px 0 6px}
   .masthead .tagline{font-style:italic;color:var(--muted);font-size:15px}
   .edition{display:flex;justify-content:space-between;border-top:1px solid var(--ink);
            border-bottom:1px solid var(--ink);padding:6px 2px;margin-top:22px}
@@ -126,7 +126,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   .chaphead h2{font-size:26px;font-weight:700;letter-spacing:-.3px}
   .chaphead .tag{margin-left:auto;text-align:right}
   .lede{font-size:17.5px;font-style:italic;color:var(--muted);margin-bottom:18px;max-width:640px}
-  .chap p.body{margin-bottom:14px;max-width:700px}
+  .chap p.body{margin-bottom:14px;max-width:820px}
   .chap p.body b{font-weight:700}
   .dropcap::first-letter{font-size:52px;float:left;line-height:.82;padding:4px 8px 0 0;
                          color:var(--oxblood);font-weight:700}
@@ -303,7 +303,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     <div class="edition">
       <span>Vol. I &middot; No. 1 &middot; Data cut: __DATE_MIN__ &ndash; __DATE_MAX__</span>
       <span>SQL &middot; Python &middot; Statistics</span>
-      <span><a class="repolink" href="__REPO_URL__">Interactive Report &#8599;</a></span>
+      <span><a class="repolink" href="__REPO_URL__">GitHub repository &#8599;</a></span>
     </div>
   </div>
 
