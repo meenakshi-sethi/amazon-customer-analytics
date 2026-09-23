@@ -1,0 +1,19 @@
+{
+  "raw_reviews": 568454,
+  "clean_reviews": 393931,
+  "invalid_rows": 2,
+  "duplicate_rows": 174521,
+  "duplicate_pct": 30.7,
+  "customers": 256059,
+  "products": 67624,
+  "date_min": "1999-10-08",
+  "date_max": "2012-10-26",
+  "champions": 26295,
+  "at_risk": 14714,
+  "avg_rating_clean": 4.18,
+  "sentiment_rating_agreement_pct": 58.5,
+  "hidden_detractors": 9246,
+  "hidden_detractors_pct_of_high_star": 3.0,
+  "advocates_identified": 30,
+  "pct_positive_overall": 56.5
+}

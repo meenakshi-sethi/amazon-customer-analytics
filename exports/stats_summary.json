@@ -1,0 +1,116 @@
+{
+  "config": {
+    "random_seed": 42,
+    "alpha": 0.05,
+    "target_power": 0.8,
+    "mde_polarity": 0.05,
+    "mwu_groups": [
+      "Champions",
+      "Casual"
+    ],
+    "mwu_min_votes": 1,
+    "ols_target": "log_helpful_votes",
+    "ols_features": [
+      "review_count",
+      "products_reviewed",
+      "avg_score",
+      "recency_days"
+    ]
+  },
+  "profiling": {
+    "reviews_per_customer": {
+      "mean": 1.54,
+      "median": 1.0,
+      "p90": 2.0,
+      "skew": 30.87
+    },
+    "helpful_votes_per_customer": {
+      "mean": 2.67,
+      "median": 1.0,
+      "p90": 6.0,
+      "skew": 27.69
+    },
+    "polarity": {
+      "mean": 0.338,
+      "median": 0.3,
+      "skew": -0.15,
+      "std": 0.444
+    }
+  },
+  "mannwhitney": {
+    "test": "Mann-Whitney U (two-sided)",
+    "question": "Do Champions earn a higher helpfulness ratio than Casual reviewers?",
+    "why_nonparametric": "helpfulness ratio is bounded [0,1] and skewed; t-test normality invalid",
+    "groups": [
+      "Champions",
+      "Casual"
+    ],
+    "n": [
+      19378,
+      65463
+    ],
+    "median": [
+      0.93,
+      1.0
+    ],
+    "u_statistic": 564279186.5,
+    "p_value": 2.642891673464655e-153,
+    "significant": true
+  },
+  "chi_square": {
+    "test": "Chi-square test of independence",
+    "question": "Is review sentiment independent of customer segment?",
+    "chi2": 948.8,
+    "dof": 10,
+    "p_value": 1.9724253790664017e-197,
+    "cramers_v": 0.035,
+    "effect_label": "weak",
+    "significant": true
+  },
+  "ols": {
+    "test": "OLS regression (statsmodels)",
+    "question": "What drives customer influence (helpfulness votes earned)?",
+    "why_log_target": "raw votes are extremely right-skewed; log1p is the documented transform",
+    "n": 256059,
+    "r_squared": 0.203,
+    "adj_r_squared": 0.203,
+    "f_p_value": 0.0,
+    "coefficients": [
+      {
+        "name": "Intercept",
+        "coef": 0.5477,
+        "p_value": 0.0
+      },
+      {
+        "name": "review_count",
+        "coef": -0.0966,
+        "p_value": 2.2971450191711992e-10
+      },
+      {
+        "name": "products_reviewed",
+        "coef": 0.2095,
+        "p_value": 5.5774423642379584e-42
+      },
+      {
+        "name": "avg_score",
+        "coef": -0.07,
+        "p_value": 0.0
+      },
+      {
+        "name": "recency_days",
+        "coef": 0.0005,
+        "p_value": 0.0
+      }
+    ]
+  },
+  "power": {
+    "test": "Power analysis (TTestIndPower)",
+    "question": "How many reviews per group to detect a 0.05 polarity shift at 80% power?",
+    "mde": 0.05,
+    "polarity_std": 0.444,
+    "cohens_d": 0.113,
+    "alpha": 0.05,
+    "power": 0.8,
+    "n_per_group": 1238
+  }
+}

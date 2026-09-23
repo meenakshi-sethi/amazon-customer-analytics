@@ -3,11 +3,13 @@
 __pycache__/
 .pytest_cache/
 *.pyc
+.ipynb_checkpoints/
 
-# Data — regenerate via the pipeline; raw DB comes from Kaggle
+# Data — the raw DB comes from Kaggle; the two big exports are regenerable
 *.sqlite
 *.sqlite3
-exports/
+exports/reviews_scored.csv
+exports/customer_master.csv
 
 # OS
 .DS_Store

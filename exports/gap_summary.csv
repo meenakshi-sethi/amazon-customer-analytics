@@ -1,0 +1,3 @@
+group,reviews,pct_of_high_star_reviews,avg_polarity
+"Hidden detractors (4-5 stars, negative text)",9246,3.0,-0.331
+"Hidden advocates (1-2 stars, positive text)",9573,,0.443

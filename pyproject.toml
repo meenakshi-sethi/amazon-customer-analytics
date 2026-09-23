@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [dependency-groups]
-dev = ["pytest>=8.0"]
+dev = ["pytest>=8.0", "jupyter>=1.0", "ipykernel>=6.29"]
 
 [tool.uv]
 package = false

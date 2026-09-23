@@ -1,0 +1,16 @@
+[
+  {
+    "step": 1,
+    "rule": "Drop rows where HelpfulnessNumerator > HelpfulnessDenominator",
+    "reason": "Structurally impossible: helpful votes are a subset of total votes",
+    "rows_removed": 2,
+    "rows_after": 568452
+  },
+  {
+    "step": 2,
+    "rule": "Deduplicate on (UserId, ProfileName, Time, Text), keep lowest Id",
+    "reason": "Cross-posted reviews would double-count customer activity",
+    "rows_removed": 174521,
+    "rows_after": 393931
+  }
+]
