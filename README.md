@@ -1,11 +1,11 @@
 # The Fine Food Review Files
 ### Amazon Customer Analytics — Retention & Advocacy Intelligence
 
-**By Meenakshi Sethi · System Analyst, Expert Technology Services (ETSAZ)**
-
 **[Interactive Report](dashboard.html)** · SQL, Python, statistics, tests, and reproducible methodology.
 
 An end-to-end customer analytics investigation over **568,454 Amazon fine-food reviews (Oct 1999 – Oct 2012)**: SQL-driven data quality enforcement, RF-E customer segmentation, validated sentiment analysis, inferential statistics, and an activation-ready advocate shortlist — delivered as a reproducible pipeline and an interactive, zero-dependency [dashboard](dashboard.html).
+
+**Data background.** The dataset is the [Amazon Fine Food Reviews](https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews) corpus (Kaggle / SNAP, Stanford Network Analysis Project) — **real, publicly released customer reviews** of gourmet food products sold on Amazon, collected over thirteen years (October 1999 – October 2012). It contains 568,454 reviews from 256,059 distinct customers covering 74,258 products, each row carrying the star rating (1–5), the full review text (~436 characters on average), a review summary, a timestamp, and the community's helpfulness votes on that review. Customer identifiers are pseudonymous as shipped by SNAP. Unlike a transaction log, there is no revenue or purchase-quantity data — value is proxied by engagement (helpfulness votes), which is why this project uses an R-F-E segmentation variant rather than classic RFM.
 
 > **Read the deliverable first:** open [`dashboard.html`](dashboard.html) — an editorial-style interactive journal generated programmatically from the pipeline's exports. A Tableau Public edition is in preparation.
 
@@ -145,3 +145,7 @@ The 356 MB raw database and the two large exports (review-level and customer-lev
 ## License
 
 MIT — see [LICENSE](LICENSE). Data: [Amazon Fine Food Reviews](https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews) (Kaggle / SNAP), used under its public research terms.
+
+---
+
+Built and verified by Meenakshi Sethi. Dataset: Amazon Fine Food Reviews (Kaggle / SNAP) — real customer review data.
