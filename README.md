@@ -60,6 +60,8 @@ python/02_sentiment_and_insights.py ← TextBlob on 393,931 reviews (no sampling
 python/04_statistics_and_modeling.py ← profiling + skew, Mann-Whitney U, chi-square + Cramér's V,
                                       statsmodels OLS, power analysis, distribution figures
 python/03_build_dashboard.py      ← generates dashboard.html from exports (numbers can't drift)
+notebooks/exploration.ipynb       ← interactive layer over the exports (audit trail, segment
+                                    profiles, sentiment gaps — uv run jupyter)
 tests/test_pipeline.py            ← 9 schema & invariant checks (pytest)
 ```
 
