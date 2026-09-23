@@ -152,6 +152,28 @@ TEMPLATE = r"""<!DOCTYPE html>
            letter-spacing:.1em;text-transform:uppercase;color:var(--gold);
            display:block;margin-bottom:3px;font-weight:700}
   .verdict .part.helps .plabel{color:var(--green)}
+  /* method chooser table (chapter V) */
+  .chooser{border:1px solid var(--rule);background:#faf6ee;padding:20px 22px;margin:22px 0}
+  .chooser .chtitle{font-family:'Playfair Display',Georgia,serif;font-size:19px;font-weight:700;margin-bottom:6px}
+  .chooser .chintro{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:12px}
+  .chooser table{width:100%;border-collapse:collapse;font-size:13px}
+  .chooser th{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10px;letter-spacing:.08em;
+       text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 10px;border-bottom:1px solid var(--rule)}
+  .chooser td{padding:7px 10px;border-bottom:1px solid #e8e0cd;line-height:1.45;vertical-align:top}
+  .chooser tr:last-child td{border-bottom:none}
+  .chooser td:nth-child(3){font-weight:600}
+  /* correlation heatmap */
+  .corrwrap{margin-top:6px;overflow-x:auto}
+  .corr{border-collapse:collapse;font-size:12.5px;font-variant-numeric:tabular-nums}
+  .corr th,.corr td{padding:6px 9px;border:1px solid #e8e0cd;text-align:center}
+  .corr thead th{font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+       font-family:'Helvetica Neue',Arial,sans-serif;color:var(--muted)}
+  .corr tbody th{font-weight:600;text-align:left;white-space:nowrap}
+  .corrbtns{display:flex;gap:8px;margin:10px 0 4px}
+  .corrbtns button{font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;letter-spacing:.06em;
+       text-transform:uppercase;padding:6px 12px;border:1px solid var(--rule);background:#fff;
+       color:var(--muted);cursor:pointer}
+  .corrbtns button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
   .verdict .row span b{font-size:16px}
   .stamp{position:absolute;top:14px;right:16px;transform:rotate(6deg);
          border:2px solid var(--oxblood);color:var(--oxblood);padding:3px 10px;
@@ -308,6 +330,19 @@ TEMPLATE = r"""<!DOCTYPE html>
     <div class="chaphead"><span class="no">V</span><h2>Does it hold up?</h2>
       <span class="tag label">Inferential statistics</span></div>
     <p class="lede">A dashboard suggests; statistics testify. Every claim above was taken to court — non-parametric where the data refused to be normal.</p>
+    <div class="chooser">
+      <div class="chtitle">Which tool, when? &mdash; the analyst's chooser</div>
+      <p class="chintro">Every test in this chapter was picked by one rule: <b>match the tool to the shape of the data and the question.</b> Categories (labels like "Champion" or "Positive") get the counting test; quantities (votes, days, ratings) get the relationship tests; lopsided quantities get the rank-based versions that stay honest.</p>
+      <table>
+        <tr><th>The question</th><th>The data's shape</th><th>The right tool</th><th>Used below</th></tr>
+        <tr><td>Do two groups differ?</td><td>Quantities, well-balanced</td><td>t-test (averages)</td><td>&mdash; (data too skewed)</td></tr>
+        <tr><td>Do two groups differ?</td><td>Quantities, lopsided</td><td>Mann-Whitney U (rankings)</td><td>&#10003; trust across segments</td></tr>
+        <tr><td>Are two <i>categories</i> related?</td><td>Category &times; category</td><td>Chi-square + Cram&eacute;r's V</td><td>&#10003; segment &times; tone</td></tr>
+        <tr><td>Do two <i>quantities</i> move together?</td><td>Quantity &times; quantity</td><td>Correlation matrix (Pearson / Spearman)</td><td>&#10003; the heatmap below</td></tr>
+        <tr><td>What drives one outcome?</td><td>Many quantities &rarr; one outcome</td><td>Regression (OLS)</td><td>&#10003; anatomy of influence</td></tr>
+        <tr><td>How big must an experiment be?</td><td>A planned A/B test</td><td>Power analysis</td><td>&#10003; sizing the next test</td></tr>
+      </table>
+    </div>
     <div id="verdicts"></div>
     <p class="body" style="font-size:13.5px;color:var(--muted)">Why non-parametric? Reviews-per-customer skews past 12, helpfulness votes are log-log skewed, and polarity is bounded and tri-modal. The t-test's normality assumption fails on all three — so Mann-Whitney U and chi-square carry the case.</p>
     <p class="plainnote">In plain words: some of these numbers are extremely lopsided &mdash; a handful of customers write hundreds of reviews while most write one. Classic tests assume nicely balanced data, so they'd give misleading answers here. The tests used instead are the ones built for lopsided data. And the surprise finding: the most prolific reviewers are <i>not</i> the most trusted &mdash; shoppers trust a review a bit less, on average, from someone who writes them constantly. Quality, not quantity, earns trust.</p>
@@ -493,7 +528,7 @@ document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('c
   const v=document.getElementById('verdicts');
   if(!DATA.stats){v.innerHTML='<p class="body">Statistics pending — run stage 4.</p>';return;}
   const S=DATA.stats, yes='SIGNIFICANT', no='NOT SIGNIFICANT';
-  const mw=S.mannwhitney, ch=S.chi_square, ol=S.ols, pw=S.power;
+  const mw=S.mannwhitney, ch=S.chi_square, ol=S.ols, pw=S.power, co=S.correlation;
   const sigCoefs=ol.coefficients.filter(c=>c.p_value<0.05&&c.name!=='Intercept');
   v.innerHTML=`
   <div class="verdict"><span class="stamp${mw.significant?'':' neg'}">${mw.significant?yes:no}</span>
@@ -552,7 +587,48 @@ document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('c
       The smallest change worth detecting is a shift of <b>${pw.mde}</b> on the sentiment scale. With the standard safety settings &mdash; at most a <b>${pw.alpha}</b> risk of a false alarm, and at least a <b>${Math.round(pw.power*100)}%</b> chance of catching a real effect &mdash; each group needs <b>${pw.n_per_group.toLocaleString()}</b> reviews. Cohen's d (${pw.cohens_d}) is simply that change expressed in units of the data's natural wobble: small effects need big samples.</div>
     <div class="part helps"><span class="plabel">How this helps</span>
       It's the difference between "we ran a test" and "we ran a test that could actually answer the question." Any A/B test on review sentiment now has a pre-computed sample size &mdash; the experiment can be scheduled and budgeted, not guessed.</div>
+  </div>
+  <div class="verdict"><span class="stamp">&minus;1 to +1</span>
+    <h3>Correlation matrix &mdash; which behaviors travel together</h3>
+    <div class="q">${co.question}</div>
+    <div class="corrbtns">
+      <button id="corrBtnS" onclick="__setCorr('spearman')">Spearman &mdash; do they rise together?</button>
+      <button id="corrBtnP" onclick="__setCorr('pearson')">Pearson &mdash; is it a straight line?</button>
+    </div>
+    <div class="corrwrap"><table class="corr">
+      <thead><tr><th></th>${co.variables.map(x=>`<th>${x}</th>`).join('')}</tr></thead>
+      <tbody id="corrBody"></tbody>
+    </table></div>
+    <div class="part"><span class="plabel">Why this technique</span>
+      Chi-square answers questions about <i>categories</i>; the correlation matrix is its counterpart for <i>quantities</i> &mdash; how strongly two numbers move together, every pair at once. We run it twice: Pearson hunts for straight-line links, Spearman asks only "when one rises, does the other tend to rise?" &mdash; which stays honest on lopsided data like vote counts.</div>
+    <div class="part"><span class="plabel">What the numbers say</span>
+      Each cell runs from &minus;1 (move opposite) through 0 (unrelated) to +1 (lockstep). Rough guide: under 0.1 negligible, 0.1&ndash;0.3 weak, 0.3&ndash;0.5 moderate, above 0.5 strong. The strongest pairs here: ${co.strongest.map(s=>`${s.a} &times; ${s.b} (&rho;=${s.rho>=0?'+':''}${s.rho})`).join(' &middot; ')}. Warm cells move together, blue cells move opposite, and the pale diagonal is simply each behavior against itself.</div>
+    <div class="part helps"><span class="plabel">How this helps</span>
+      It's the fastest honesty check on the regression above: pairs that correlate strongly are the ones you'd expect to matter, and pairs near zero warn you not to force a story onto them. It also flags redundancy &mdash; two behaviors measuring nearly the same thing &mdash; before they quietly distort a model.</div>
   </div>`;
+
+  /* ---------- correlation heatmap rendering ---------- */
+  if(co && co.variables && co.variables.length){
+    const cellHtml=(val,i,j)=>{
+      const a=Math.min(Math.abs(val),1);
+      const bg = i===j ? 'rgba(120,100,60,0.22)'
+        : val>=0 ? `rgba(148,29,28,${(a*0.62).toFixed(2)})`
+                 : `rgba(31,84,147,${(a*0.62).toFixed(2)})`;
+      const fg = a>0.45 ? '#fff' : 'inherit';
+      return `<td style="background:${bg};color:${fg}">${val.toFixed(2)}</td>`;
+    };
+    const rowsHtml=(m)=>co.variables.map((r,i)=>
+      `<tr><th>${r}</th>${co.variables.map((c,j)=>cellHtml(m[i][j],i,j)).join('')}</tr>`).join('');
+    window.__corrMode='spearman';
+    window.__renderCorr=function(){
+      const m=window.__corrMode==='spearman'?co.spearman:co.pearson;
+      document.getElementById('corrBody').innerHTML=rowsHtml(m);
+      document.getElementById('corrBtnS').className=window.__corrMode==='spearman'?'on':'';
+      document.getElementById('corrBtnP').className=window.__corrMode==='pearson'?'on':'';
+    };
+    window.__setCorr=function(mode){window.__corrMode=mode;window.__renderCorr();};
+    window.__renderCorr();
+  }
 })();
 
 /* ---------- advocates table ---------- */

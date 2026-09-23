@@ -221,6 +221,36 @@ print(f"\n--- Power analysis ---")
 print(f"  d={power_res['cohens_d']}  ->  {n_per_group:,} reviews per group "
       f"(~{n_per_group * 2 / 480:.0f} days at 2012 review volumes)")
 
+# --- correlation matrix (numerical relationships) ------------------------------------
+corr_cols = ["review_count", "products_reviewed", "avg_score",
+             "recency_days", "helpfulness_ratio", "helpful_votes"]
+corr_labels = ["Reviews written", "Products covered", "Avg star rating",
+               "Days since last review", "Helpfulness ratio", "Votes earned"]
+num = master[corr_cols]
+pearson_m = num.corr(method="pearson").round(2)
+spearman_m = num.corr(method="spearman").round(2)
+pairs = []
+for i in range(len(corr_cols)):
+    for j in range(i + 1, len(corr_cols)):
+        pairs.append((corr_labels[i], corr_labels[j],
+                      float(spearman_m.iloc[i, j]), float(pearson_m.iloc[i, j])))
+pairs.sort(key=lambda p: abs(p[2]), reverse=True)
+corr_res = {
+    "test": "Correlation matrix (Pearson & Spearman)",
+    "question": "Which numerical behaviors move together, and how strongly?",
+    "variables": corr_labels,
+    "pearson": pearson_m.values.tolist(),
+    "spearman": spearman_m.values.tolist(),
+    "why_both": ("Pearson measures straight-line relationships; Spearman measures "
+                 "whether two things rise together even when the relationship is "
+                 "curved or the data is lopsided. When they disagree, the link is "
+                 "real but not a straight line."),
+    "strongest": [{"a": a, "b": b, "rho": r, "r": pr} for a, b, r, pr in pairs[:3]],
+}
+print("\n--- Correlation matrix (Spearman) ---")
+for a, b, r, pr in pairs[:3]:
+    print(f"  {a} x {b}: rho={r:+.2f} (Pearson r={pr:+.2f})")
+
 # --- export -------------------------------------------------------------------------
 summary = {
     "config": {k: v for k, v in CONFIG.items() if k != "figure_dpi"},
@@ -229,6 +259,7 @@ summary = {
     "chi_square": chi2_res,
     "ols": ols_res,
     "power": power_res,
+    "correlation": corr_res,
 }
 with open(EXPORTS / "stats_summary.json", "w") as f:
     json.dump(summary, f, indent=2)

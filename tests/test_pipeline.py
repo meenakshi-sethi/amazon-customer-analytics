@@ -113,8 +113,24 @@ def test_advocates_meet_criteria():
 
 def test_stats_results_present():
     stats = json.loads((EXPORTS / "stats_summary.json").read_text())
-    for key in ["mannwhitney", "chi_square", "ols", "power"]:
+    for key in ["mannwhitney", "chi_square", "ols", "power", "correlation"]:
         assert key in stats, f"missing statistical result: {key}"
     assert 0 <= stats["mannwhitney"]["p_value"] <= 1
     assert 0 <= stats["ols"]["r_squared"] <= 1
     assert stats["power"]["n_per_group"] > 0
+
+
+def test_correlation_matrix_wellformed():
+    stats = json.loads((EXPORTS / "stats_summary.json").read_text())
+    corr = stats["correlation"]
+    n = len(corr["variables"])
+    assert n >= 4, "correlation matrix too small to be informative"
+    for key in ["pearson", "spearman"]:
+        m = corr[key]
+        assert len(m) == n and all(len(row) == n for row in m), f"{key} not square"
+        for i in range(n):
+            assert m[i][i] == 1.0, f"{key} diagonal must be 1.0"
+            for j in range(n):
+                assert -1.0 <= m[i][j] <= 1.0, f"{key} value out of [-1, 1]"
+                assert m[i][j] == m[j][i], f"{key} not symmetric"
+    assert len(corr["strongest"]) >= 3, "strongest pairs not exported"
