@@ -7,7 +7,7 @@ An end-to-end customer analytics investigation over **568,454 Amazon fine-food r
 
 **Data background.** The dataset is the [Amazon Fine Food Reviews](https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews) corpus (Kaggle / SNAP, Stanford Network Analysis Project) — **real, publicly released customer reviews** of gourmet food products sold on Amazon, collected over thirteen years (October 1999 – October 2012). It contains 568,454 reviews from 256,059 distinct customers covering 74,258 products, each row carrying the star rating (1–5), the full review text (~436 characters on average), a review summary, a timestamp, and the community's helpfulness votes on that review. Customer identifiers are pseudonymous as shipped by SNAP. Unlike a transaction log, there is no revenue or purchase-quantity data — value is proxied by engagement (helpfulness votes), which is why this project uses an R-F-E segmentation variant rather than classic RFM.
 
-> **Where's the data?** The raw `database.sqlite` is 356 MB — too large for a GitHub repository (files over 100 MB are rejected), so it is intentionally not committed. To reproduce the full analysis, download it from [Kaggle — Amazon Fine Food Reviews](https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews) (free account required) and follow the commands in [§4 Reproducibility](#4-reproducibility-uv). If that link ever gives you trouble, open an issue on this repo and I'll help you get it. The small aggregate exports (`exports/`) **are** committed, so the dashboard and notebook work out of the box without the raw file.
+> **Where's the data?** The raw `database.sqlite` is 356 MB — too large for a GitHub repository (files over 100 MB are rejected), so it lives in the gitignored `data/` folder, not in the repository. To reproduce the full analysis, download it from [Kaggle — Amazon Fine Food Reviews](https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews) (free account required) and follow the commands in [§4 Reproducibility](#4-reproducibility-uv). If that link ever gives you trouble, open an issue on this repo and I'll help you get it. The small aggregate exports (`exports/`) **are** committed, so the dashboard and notebook work out of the box without the raw file.
 
 > **Read the deliverable first:** open [`dashboard.html`](dashboard.html) — an editorial-style interactive journal generated programmatically from the pipeline's exports. A Tableau Public edition is in preparation.
 
@@ -85,8 +85,9 @@ Zero hard-coding: all thresholds live in `CONFIG` blocks at the top of each scri
 ```bash
 # 1. Get the data: Kaggle "Amazon Fine Food Reviews" → database.sqlite
 #    https://www.kaggle.com/datasets/snap/amazon-fine-food-reviews
-#    (place it anywhere, then point the pipeline at it)
-export AMAZON_DB=/path/to/database.sqlite   # default: ../Amazon/database.sqlite
+#    (place it in data/ — the default location, gitignored)
+cp /path/to/database.sqlite data/database.sqlite
+#    or point the pipeline anywhere: export AMAZON_DB=/path/to/database.sqlite
 
 # 2. Reproduce the environment (requires uv: brew install uv)
 uv sync
@@ -107,6 +108,7 @@ uv sync
 
 ```
 ├── dashboard.html              ← THE deliverable (self-contained, open in any browser)
+├── data/database.sqlite        ← raw Kaggle DB (gitignored — 356 MB, see note above)
 ├── pyproject.toml / uv.lock    ← pinned, reproducible environment
 ├── sql/
 │   ├── 01_data_quality_audit.sql

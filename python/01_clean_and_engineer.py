@@ -31,9 +31,9 @@ import pandas as pd
 # --- config (zero hard-coding below this block) --------------------------------
 ROOT = Path(__file__).resolve().parents[1]
 # Raw database location. Override with the AMAZON_DB environment variable;
-# default expects the Kaggle "Amazon Fine Food Reviews" database.sqlite in a
-# sibling folder (../Amazon/database.sqlite).
-DB_PATH = Path(os.environ.get("AMAZON_DB", str(ROOT.parent / "Amazon" / "database.sqlite")))
+# default expects the Kaggle "Amazon Fine Food Reviews" database.sqlite in the
+# project's data/ folder (gitignored — download from Kaggle, see README).
+DB_PATH = Path(os.environ.get("AMAZON_DB", str(ROOT / "data" / "database.sqlite")))
 SQL_FILE = ROOT / "sql" / "02_customer_master.sql"
 EXPORTS = ROOT / "exports"
 MATURE_YEARS_FROM = "2007-01"  # timeline starts when monthly volume is meaningful

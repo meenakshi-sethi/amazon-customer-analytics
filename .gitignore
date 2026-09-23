@@ -6,6 +6,7 @@ __pycache__/
 .ipynb_checkpoints/
 
 # Data — the raw DB comes from Kaggle; the two big exports are regenerable
+data/
 *.sqlite
 *.sqlite3
 exports/reviews_scored.csv

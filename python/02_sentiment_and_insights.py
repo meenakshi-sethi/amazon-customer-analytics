@@ -42,8 +42,8 @@ from textblob import TextBlob
 
 ROOT = Path(__file__).resolve().parents[1]
 # Override with the AMAZON_DB environment variable; default expects the
-# Kaggle database.sqlite in a sibling folder (../Amazon/database.sqlite).
-DB_PATH = Path(os.environ.get("AMAZON_DB", str(ROOT.parent / "Amazon" / "database.sqlite")))
+# Kaggle database.sqlite in the project's data/ folder (gitignored).
+DB_PATH = Path(os.environ.get("AMAZON_DB", str(ROOT / "data" / "database.sqlite")))
 EXPORTS = ROOT / "exports"
 
 NEUTRAL_BAND = 0.10  # |polarity| <= this => neutral. Documented, challengeable.
