@@ -164,5 +164,7 @@ def test_dashboard_teaching_elements():
         ("__wireTips", "re-runnable tooltip wiring"),
         ("Kruskal-Wallis", "full method menu incl. benched methods"),
         ("__toggleAll", "expand/collapse explanations"),
+        ("<details class=\"chooser\">", "collapsible method chooser"),
+        ("href=\"#c1\"", "clickable taxonomy chips"),
     ]:
         assert marker in html, f"dashboard lost its {meaning} ({marker!r} not found)"

@@ -117,8 +117,15 @@
   .verdict details.part.helps summary.plabel::after{color:var(--green)}
   .verdict .ptext{padding:2px 12px 11px;font-size:14px;line-height:1.6}
   /* method chooser table (chapter V) */
-  .chooser{border:1px solid var(--rule);background:#faf6ee;padding:20px 22px;margin:22px 0}
-  .chooser .chtitle{font-family:'Playfair Display',Georgia,serif;font-size:19px;font-weight:700;margin-bottom:6px}
+  .chooser{border:1px solid var(--rule);background:#faf6ee;padding:0;margin:22px 0}
+  .chooser summary{cursor:pointer;list-style:none;padding:14px 22px;font-family:'Playfair Display',Georgia,serif;
+    font-size:19px;font-weight:700;position:relative}
+  .chooser summary::-webkit-details-marker{display:none}
+  .chooser summary::after{content:'+';position:absolute;right:22px;top:50%;transform:translateY(-50%);
+    font-family:'Helvetica Neue',Arial,sans-serif;font-size:20px;font-weight:400;color:var(--muted)}
+  .chooser details[open] summary::after,.chooser[open] summary::after{content:'\2212'}
+  .chooser summary:hover{background:#f3ecdd}
+  .chooser .chooserbody{padding:6px 22px 20px}
   .chooser .chintro{font-size:14px;color:var(--muted);line-height:1.6;margin-bottom:12px}
   .chooser table{width:100%;border-collapse:collapse;font-size:13px}
   .chooser th{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10px;letter-spacing:.08em;
@@ -183,6 +190,10 @@
   .taxchip{font-size:11px;letter-spacing:.05em;padding:5px 12px;border:1px solid var(--rule);
     border-radius:999px;color:var(--muted);background:#fff;text-transform:uppercase}
   .taxchip.used{border-color:var(--ink);color:var(--ink);font-weight:600}
+  a.taxchip{text-decoration:none;color:inherit;cursor:pointer;transition:background .15s,transform .15s}
+  a.taxchip:hover{background:var(--ink);color:#faf6ee}
+  a.taxchip:hover .q{color:inherit}
+  html{scroll-behavior:smooth}
   .taxchip .q{display:block;font-size:9.5px;letter-spacing:.03em;text-transform:none;
     color:var(--muted);font-weight:400;margin-top:2px}
 
@@ -308,23 +319,20 @@
       <span class="tag label">Inferential statistics</span></div>
     <p class="lede">A dashboard suggests; statistics testify. Every claim above was taken to court — non-parametric where the data refused to be normal.</p>
     <div class="taxstrip">
-      <span class="taxchip used tip" data-tip="<b>Descriptive analysis.</b> Summarizes what happened &mdash; averages, ranges, charts. No verdicts, just a clear picture. Used here: chapters I&ndash;IV of this report.">Descriptive<span class="q">what happened?</span></span>
-      <span class="taxchip used tip" data-tip="<b>Exploratory data analysis (EDA).</b> Look before you leap &mdash; plots and summaries to find patterns before any hypothesis is fixed. Used here: the exploration notebook that ships with this report.">Exploratory<span class="q">what's in there?</span></span>
-      <span class="taxchip used tip" data-tip="<b>Diagnostic analysis.</b> Asks why something happened by examining relationships between variables. Used here: the sentiment cross-tab (Ch. IV) explaining hidden detractors &mdash; low stars, warm words.">Diagnostic<span class="q">why did it happen?</span></span>
-      <span class="taxchip used tip" data-tip="<b>Inferential analysis.</b> Does the pattern hold beyond this sample? Hypothesis tests, p-values, effect sizes. Used here: this entire chapter &mdash; every verdict card below.">Inferential<span class="q">does it hold up?</span></span>
-      <span class="taxchip tip" data-tip="<b>Predictive analysis.</b> Forecasts what might happen next from historical data &mdash; time series, ML models. Not used: the retention timeline (Ch. II) only describes the past; no forecasting was in scope.">Predictive<span class="q">what's next?</span></span>
-      <span class="taxchip tip" data-tip="<b>Prescriptive analysis.</b> Recommends what to do next, combining data with business rules. Not formally used &mdash; though the advocate shortlist (Ch. VI) leans this way.">Prescriptive<span class="q">what to do?</span></span>
-      <span class="taxchip tip" data-tip="<b>Causal analysis.</b> Proves X causes Y &mdash; needs experiments (A/B tests), not observation. Not used: every relationship below is an association, not a proven cause. The power analysis sizes the experiment that could change that.">Causal<span class="q">did X cause Y?</span></span>
-      <span class="taxchip tip" data-tip="<b>Bayesian analysis.</b> Updates the probability of a belief as evidence arrives. Not used: every test in this chapter is the classic (frequentist) kind.">Bayesian<span class="q">update beliefs</span></span>
+      <a class="taxchip used tip" href="#c1" data-tip="<b>Descriptive analysis.</b> Summarizes what happened &mdash; averages, ranges, charts. No verdicts, just a clear picture. Takes you to Chapter I, the data audit.">Descriptive<span class="q">what happened?</span></a>
+      <a class="taxchip used tip" href="#c2" data-tip="<b>Exploratory data analysis (EDA).</b> Look before you leap &mdash; plots and summaries to find patterns before any hypothesis is fixed. Takes you to Chapter II, the segmentation.">Exploratory<span class="q">what's in there?</span></a>
+      <a class="taxchip used tip" href="#c4" data-tip="<b>Diagnostic analysis.</b> Asks why something happened by examining relationships between variables. Takes you to Chapter IV, the sentiment cross-tab.">Diagnostic<span class="q">why did it happen?</span></a>
+      <a class="taxchip used tip" href="#c5" data-tip="<b>Inferential analysis.</b> Does the pattern hold beyond this sample? Hypothesis tests, p-values, effect sizes. You are here &mdash; every verdict card below.">Inferential<span class="q">does it hold up?</span></a>
     </div>
-    <p class="body" style="font-size:12px;color:var(--muted);margin:6px 0 0">The dark chips are the kinds of analysis this report actually performs; hover any chip to learn what that kind is for. The light ones are deliberately out of scope &mdash; a report that claims more than it proves is lying.</p>
+    <p class="body" style="font-size:12px;color:var(--muted);margin:6px 0 0">Each chip is the kind of analysis this report performs &mdash; click one to jump to where it happens; hover to learn what it's for.</p>
     <div class="corrbtns" style="margin:0 0 16px">
       <button onclick="__toggleAll(true)">Expand all explanations</button>
       <button onclick="__toggleAll(false)">Collapse all</button>
       <span style="font-size:11.5px;color:var(--muted);align-self:center;margin-left:4px">the numbers stay visible &mdash; the teaching unfolds on click</span>
     </div>
-    <div class="chooser">
-      <div class="chtitle">Which tool, when? &mdash; the analyst's chooser</div>
+    <details class="chooser">
+      <summary>Which tool, when? &mdash; the analyst's chooser</summary>
+      <div class="chooserbody">
       <p class="chintro">Every test in this chapter was picked by one rule: <b>match the tool to the shape of the data and the question.</b> The selection path, in order: define the objective &rarr; identify the data type (category or quantity) &rarr; count the variables involved &rarr; check each method's assumptions &rarr; ask whether the observations are paired or independent. Categories (labels like "Champion" or "Positive") get the counting test; quantities (votes, days, ratings) get the relationship tests; lopsided quantities get the rank-based versions that stay honest.</p>
       <table>
         <tr><th>The question</th><th>The data's shape</th><th>The right tool</th><th>Used below</th></tr>
@@ -337,7 +345,8 @@
         <tr><td>What drives one outcome?</td><td>Many quantities &rarr; one outcome</td><td>Regression (OLS)</td><td>&#10003; anatomy of influence</td></tr>
         <tr><td>How big must an experiment be?</td><td>A planned A/B test</td><td>Power analysis</td><td>&#10003; sizing the next test</td></tr>
       </table>
-    </div>
+      </div>
+    </details>
     <div id="skewex"></div>
     <div id="verdicts"></div>
     <p class="body" style="font-size:13.5px;color:var(--muted)">Why non-parametric? Reviews-per-customer skews past 12, helpfulness votes are log-log skewed, and polarity is bounded and tri-modal. The t-test's normality assumption fails on all three — so Mann-Whitney U and chi-square carry the case.</p>
