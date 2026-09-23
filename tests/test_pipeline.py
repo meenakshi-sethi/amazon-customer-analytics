@@ -120,6 +120,25 @@ def test_stats_results_present():
     assert stats["power"]["n_per_group"] > 0
 
 
+def test_skewness_profiling_present():
+    """The skew numbers justify every non-parametric choice — they must be exported."""
+    stats = json.loads((EXPORTS / "stats_summary.json").read_text())
+    prof = stats["profiling"]
+    for key in ["reviews_per_customer", "helpful_votes_per_customer", "polarity"]:
+        assert key in prof, f"missing skewness profile: {key}"
+        assert "skew" in prof[key] and "mean" in prof[key] and "median" in prof[key]
+        # the whole point: these distributions are NOT bell curves
+        assert prof[key]["skew"] != 0
+
+
+def test_skewness_figures_rendered():
+    """The dashboard embeds these matplotlib figures — the pipeline must produce them."""
+    figures = ROOT / "docs" / "figures"
+    for name in ["fig1_review_count_dist.png", "fig2_polarity_dist.png", "fig3_helpful_votes_dist.png"]:
+        assert (figures / name).exists(), f"missing skewness figure: {name}"
+        assert (figures / name).stat().st_size > 1000, f"figure suspiciously small: {name}"
+
+
 def test_correlation_matrix_wellformed():
     stats = json.loads((EXPORTS / "stats_summary.json").read_text())
     corr = stats["correlation"]

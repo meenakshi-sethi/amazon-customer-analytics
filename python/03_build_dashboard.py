@@ -43,6 +43,30 @@ stats_path = EXPORTS / "stats_summary.json"
 if stats_path.exists():
     DATA["stats"] = json.loads(stats_path.read_text())
 
+# skewness exhibit — figures are RENDERED by the statistics stage (matplotlib);
+# this report only embeds and displays them. No statistics are computed in HTML.
+import base64
+FIGDIR = ROOT / "docs" / "figures"
+_prof = DATA.get("stats", {}).get("profiling", {})
+_FIGS = [
+    ("fig1_review_count_dist.png", "Reviews per customer", "reviews_per_customer"),
+    ("fig2_polarity_dist.png", "Polarity per review", "polarity"),
+    ("fig3_helpful_votes_dist.png", "Helpfulness votes earned", "helpful_votes_per_customer"),
+]
+skewfigs = []
+for _fname, _title, _key in _FIGS:
+    _p = FIGDIR / _fname
+    if _p.exists() and _key in _prof:
+        skewfigs.append({
+            "title": _title,
+            "img": "data:image/png;base64," + base64.b64encode(_p.read_bytes()).decode(),
+            "skew": _prof[_key]["skew"],
+            "mean": _prof[_key]["mean"],
+            "median": _prof[_key]["median"],
+        })
+if skewfigs:
+    DATA["skewfigs"] = skewfigs
+
 TEMPLATE = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -218,6 +242,12 @@ TEMPLATE = r"""<!DOCTYPE html>
   .plainnote{font-size:13.5px;color:var(--muted);border-left:3px solid var(--gold);
              padding:6px 0 6px 14px;margin:16px 0 0;font-style:italic}
 
+  /* hover-to-learn parameter tooltips + skewness exhibit */
+  .tip{cursor:help;border-bottom:1px dotted var(--muted)}
+  .skewfig{margin:16px 0 0;break-inside:avoid}
+  .skewfig img{width:100%;height:auto;border:1px solid var(--rule);background:#fff;display:block}
+  .skewfig figcaption{font-size:12.5px;color:var(--muted);margin-top:7px;line-height:1.55}
+
   /* colophon */
   .colophon{margin-top:60px;border-top:3px double var(--rule);padding-top:18px;
             font-size:13px;color:var(--muted)}
@@ -357,6 +387,7 @@ TEMPLATE = r"""<!DOCTYPE html>
         <tr><td>How big must an experiment be?</td><td>A planned A/B test</td><td>Power analysis</td><td>&#10003; sizing the next test</td></tr>
       </table>
     </div>
+    <div id="skewex"></div>
     <div id="verdicts"></div>
     <p class="body" style="font-size:13.5px;color:var(--muted)">Why non-parametric? Reviews-per-customer skews past 12, helpfulness votes are log-log skewed, and polarity is bounded and tri-modal. The t-test's normality assumption fails on all three — so Mann-Whitney U and chi-square carry the case.</p>
     <p class="plainnote">In plain words: some of these numbers are extremely lopsided &mdash; a handful of customers write hundreds of reviews while most write one. Classic tests assume nicely balanced data, so they'd give misleading answers here. The tests used instead are the ones built for lopsided data. And the surprise finding: the most prolific reviewers are <i>not</i> the most trusted &mdash; shoppers trust a review a bit less, on average, from someone who writes them constantly. Quality, not quantity, earns trust.</p>
@@ -548,10 +579,10 @@ document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('c
   <div class="verdict"><span class="stamp${mw.significant?'':' neg'}">${mw.significant?yes:no}</span>
     <h3>Mann-Whitney U — trust across segments</h3>
     <div class="q">${mw.question}</div>
-    <div class="row"><span>U <b>${mw.u_statistic.toLocaleString()}</b></span>
-      <span>p <b>${mw.p_value.toExponential(2)}</b></span>
-      <span>medians <b>${mw.median[0]} vs ${mw.median[1]}</b></span>
-      <span>n <b>${mw.n[0].toLocaleString()} vs ${mw.n[1].toLocaleString()}</b></span></div>
+    <div class="row"><span class="tip" data-tip="<b>Mann-Whitney U &mdash; the rank-count test.</b> What: counts how often a review from one group outranks a review from the other. Why: averages mislead on lopsided data; ranks stay honest. When: comparing two groups on skewed scores. Read: paired with a tiny p-value, it means the groups genuinely differ.">U <b>${mw.u_statistic.toLocaleString()}</b></span>
+      <span class="tip" data-tip="<b>p-value &mdash; the honesty gauge.</b> What: the probability of seeing a gap this big if the groups were truly identical. Read: below the standard threshold of 0.05 means the difference is real, not luck. It says the effect exists &mdash; not how big it is; for size, read the medians.">p <b>${mw.p_value.toExponential(2)}</b></span>
+      <span class="tip" data-tip="<b>Median &mdash; the typical value.</b> What: the middle score once everything is sorted. Why: unlike the mean, no single extreme customer can drag it. When: the fair summary whenever data is skewed. Read: compare the two medians to see which group is typically more trusted.">medians <b>${mw.median[0]} vs ${mw.median[1]}</b></span>
+      <span class="tip" data-tip="<b>n &mdash; sample size.</b> What: how many observations fed the test. Why: small samples can hide real effects or manufacture fake ones. Read: both groups here are large, so this verdict is stable.">n <b>${mw.n[0].toLocaleString()} vs ${mw.n[1].toLocaleString()}</b></span></div>
     <details class="partNone"><summary class="plabel">Why this technique</summary><div class="ptext">      I wanted to know whether two groups &mdash; the most engaged customers and the casual ones &mdash; are trusted differently by other shoppers. The usual test (a t-test) compares averages, but it only works on well-balanced data; helpfulness scores here are heavily lopsided, so it would have given a misleading answer. Mann-Whitney U compares <i>rankings</i> instead of averages &mdash; "do the reviews of one group tend to sit higher than the other's?" &mdash; which stays honest on lopsided data.</div></details>
     <details class="partNone"><summary class="plabel">What the numbers say</summary><div class="ptext">      The p-value is the probability of seeing a gap this big if the two groups were truly identical. Anything under the standard threshold of <b>0.05</b> counts as a real difference; ours is far below it. The medians (the "typical" score, unaffected by extremes) give the direction: ${mw.significant ? (mw.median[0] > mw.median[1]
         ? `${mw.groups[0]} reviewers earn a higher typical trust score (${mw.median[0]} vs ${mw.median[1]}).`
@@ -563,9 +594,9 @@ document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('c
   <div class="verdict"><span class="stamp${ch.significant?'':' neg'}">${ch.significant?yes:no}</span>
     <h3>Chi-square — sentiment &times; segment</h3>
     <div class="q">${ch.question}</div>
-    <div class="row"><span>&chi;&sup2; <b>${ch.chi2.toLocaleString()}</b></span>
-      <span>dof <b>${ch.dof}</b></span><span>p <b>${ch.p_value.toExponential(2)}</b></span>
-      <span>Cram&eacute;r's V <b>${ch.cramers_v}</b> (${ch.effect_label})</span></div>
+    <div class="row"><span class="tip" data-tip="<b>Chi-square (&chi;&sup2;) &mdash; the category drift meter.</b> What: how far the observed counts drift from what pure chance would produce. Why: you cannot average labels like Champion or Positive &mdash; counting is the only option. When: both variables are categories. Read: a bigger &chi;&sup2; is stronger evidence of a real association.">&chi;&sup2; <b>${ch.chi2.toLocaleString()}</b></span>
+      <span class="tip" data-tip="<b>Degrees of freedom &mdash; the calibration.</b> What: how many independent comparisons the table allows: (rows&minus;1)&times;(columns&minus;1). Why: more categories inflate &chi;&sup2; by chance alone; dof corrects for that. Read: paired with &chi;&sup2; to produce the p-value.">dof <b>${ch.dof}</b></span><span class="tip" data-tip="<b>p-value &mdash; the honesty gauge.</b> What: the probability of a pattern this strong appearing by pure chance. Read: below 0.05 means the association is real. For how strong, read Cram&eacute;r's V.">p <b>${ch.p_value.toExponential(2)}</b></span>
+      <span class="tip" data-tip="<b>Cram&eacute;r's V &mdash; the strength gauge.</b> What: converts &chi;&sup2; onto a 0-to-1 scale of association strength. Why: the p-value only says real; V says how big. Read: under 0.1 weak, around 0.3 moderate, 0.5 and up strong.">Cram&eacute;r's V <b>${ch.cramers_v}</b> (${ch.effect_label})</span></div>
     <details class="partNone"><summary class="plabel">Why this technique</summary><div class="ptext">      I wanted to know whether a customer's segment (regular, newcomer, drifting away&hellip;) has any bearing on the <i>tone</i> of what they write. Both are categories, not quantities &mdash; you can't average "Champion" or "Positive" &mdash; so the test that fits is the one built for counting: does the mix of tones differ from segment to segment more than chance would allow?</div></details>
     <details class="partNone"><summary class="plabel">What the numbers say</summary><div class="ptext">      The p-value (again: probability of a pattern this strong appearing by pure chance; threshold <b>0.05</b>) says the relationship is real. But Cram&eacute;r's V &mdash; a 0-to-1 strength gauge where under 0.1 is weak, 0.3 is moderate &mdash; measures <b>${ch.cramers_v}</b>: real, but ${ch.effect_label}. Segment tells you something about tone, just not very much.</div></details>
     <details class="part helps"><summary class="plabel">How this helps</summary><div class="ptext">      It sets fair expectations for targeting: segmenting customers is useful for <i>who</i> to contact, but it shouldn't be the only basis for <i>what</i> to say &mdash; tone varies too much within each group. Read the words, not just the label.</div></details>
@@ -573,19 +604,19 @@ document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('c
   <div class="verdict"><span class="stamp">R&sup2; ${ol.r_squared}</span>
     <h3>OLS regression — the anatomy of influence</h3>
     <div class="q">${ol.question}</div>
-    <div class="row"><span>n <b>${ol.n.toLocaleString()}</b></span>
-      <span>adj-R&sup2; <b>${ol.adj_r_squared}</b></span>
-      <span>F p <b>${ol.f_p_value.toExponential(2)}</b></span></div>
+    <div class="row"><span class="tip" data-tip="<b>n &mdash; sample size.</b> What: how many customers the regression weighed. Read: a large n means the coefficient estimates are stable.">n <b>${ol.n.toLocaleString()}</b></span>
+      <span class="tip" data-tip="<b>Adjusted R&sup2; &mdash; the explained share.</b> What: the fraction of variation in the outcome that the model explains, with a penalty for every added predictor. Why: plain R&sup2; only ever goes up as you add drivers; the adjusted version keeps the model honest. Read: 0.15 means the drivers account for roughly 15% of why influence varies.">adj-R&sup2; <b>${ol.adj_r_squared}</b></span>
+      <span class="tip" data-tip="<b>F-test p-value &mdash; the model's overall verdict.</b> What: the probability that all coefficients together are indistinguishable from zero. Read: below 0.05 means the model as a whole earns its place; each driver is then judged by its own p-value below.">F p <b>${ol.f_p_value.toExponential(2)}</b></span></div>
     <details class="partNone"><summary class="plabel">Why this technique</summary><div class="ptext">      The question here is "what actually <i>drives</i> influence &mdash; the votes a customer's reviews earn?" Regression is the tool that weighs several possible drivers at once and tells you which ones still matter after accounting for the others. One honest adjustment first: vote counts are extremely lopsided (a few customers earn thousands, most earn none), so the model works on a <i>logarithmic</i> scale &mdash; the same trick that turns a sprint of a few superstars into a fair race across everyone.</div></details>
-    <details class="partNone"><summary class="plabel">What the numbers say</summary><div class="ptext">      Each driver gets a coefficient (&beta;) &mdash; its independent push on influence &mdash; and a p-value testing whether that push is distinguishable from zero (threshold <b>0.05</b>). The significant drivers: ${sigCoefs.map(c=>`${c.name} (&beta;=${c.coef}, p=${c.p_value.toExponential(1)})`).join(' &middot; ')}. Adjusted R&sup2; = <b>${ol.adj_r_squared}</b> means these four factors together explain about ${Math.round(ol.adj_r_squared*100)}% of why some customers earn far more votes than others &mdash; solid for behavior data, and honest about the rest being unmeasured factors.</div></details>
+    <details class="partNone"><summary class="plabel">What the numbers say</summary><div class="ptext">      Each driver gets a coefficient (&beta;) &mdash; its independent push on influence &mdash; and a p-value testing whether that push is distinguishable from zero (threshold <b>0.05</b>). The significant drivers: ${sigCoefs.map(c=>`<span class="tip" data-tip="<b>&beta; (beta) &mdash; the independent push.</b> What: how much the outcome changes when this driver rises by one unit, holding the others fixed. The p-value tests whether that push is distinguishable from zero (threshold 0.05).">${c.name} (&beta;=${c.coef}, p=${c.p_value.toExponential(1)})</span>`).join(' &middot; ')}. Adjusted R&sup2; = <b>${ol.adj_r_squared}</b> means these four factors together explain about ${Math.round(ol.adj_r_squared*100)}% of why some customers earn far more votes than others &mdash; solid for behavior data, and honest about the rest being unmeasured factors.</div></details>
     <details class="part helps"><summary class="plabel">How this helps</summary><div class="ptext">      It turns "who is influential?" from a guess into a checklist. Want more trusted reviewers? The coefficients say which levers actually move influence and which are noise &mdash; so an engagement program can be built on the drivers that provably matter.</div></details>
   </div>
   <div class="verdict"><span class="stamp">n &ge; ${pw.n_per_group.toLocaleString()}</span>
     <h3>Power analysis — sizing the next experiment</h3>
     <div class="q">${pw.question}</div>
-    <div class="row"><span>MDE <b>${pw.mde}</b></span><span>Cohen's d <b>${pw.cohens_d}</b></span>
-      <span>&alpha; <b>${pw.alpha}</b></span><span>power <b>${pw.power}</b></span>
-      <span>per group <b>${pw.n_per_group.toLocaleString()}</b></span></div>
+    <div class="row"><span class="tip" data-tip="<b>MDE &mdash; minimum detectable effect.</b> What: the smallest change the experiment commits to catching, chosen before any data is collected. Why: fixing it upfront keeps the sample-size arithmetic honest. Read: a modest but business-relevant shift on the sentiment scale.">MDE <b>${pw.mde}</b></span><span class="tip" data-tip="<b>Cohen's d &mdash; effect size in natural units.</b> What: the change expressed in standard deviations of the data's own wobble. Read: 0.2 small, 0.5 medium, 0.8 large. A small d means big samples are needed &mdash; which is what drives the number on the right.">Cohen's d <b>${pw.cohens_d}</b></span>
+      <span class="tip" data-tip="<b>&alpha; (alpha) &mdash; the false-alarm budget.</b> What: the maximum acceptable risk of declaring a difference that is not real. Convention: 0.05, meaning at most a 5% false-positive rate.">&alpha; <b>${pw.alpha}</b></span><span class="tip" data-tip="<b>Power &mdash; the true-detection guarantee.</b> What: the probability the experiment catches a real effect of the chosen size. Convention: 0.80, meaning at least an 80% chance &mdash; the planning standard.">power <b>${pw.power}</b></span>
+      <span class="tip" data-tip="<b>Sample size per group &mdash; the experiment's price tag.</b> What: reviews each A/B arm must collect before the verdict is trustworthy. Read: derived from MDE, &alpha; and power &mdash; arithmetic, not a guess.">per group <b>${pw.n_per_group.toLocaleString()}</b></span></div>
     <details class="partNone"><summary class="plabel">Why this technique</summary><div class="ptext">      Before anyone runs an experiment &mdash; say, testing whether a new review form makes feedback warmer &mdash; someone has to decide how long to run it. Run it too short and a real improvement goes undetected; run it too long and budget is burned proving what was already clear. Power analysis does that arithmetic <i>before</i> the experiment, not after.</div></details>
     <details class="partNone"><summary class="plabel">What the numbers say</summary><div class="ptext">      The smallest change worth detecting is a shift of <b>${pw.mde}</b> on the sentiment scale. With the standard safety settings &mdash; at most a <b>${pw.alpha}</b> risk of a false alarm, and at least a <b>${Math.round(pw.power*100)}%</b> chance of catching a real effect &mdash; each group needs <b>${pw.n_per_group.toLocaleString()}</b> reviews. Cohen's d (${pw.cohens_d}) is simply that change expressed in units of the data's natural wobble: small effects need big samples.</div></details>
     <details class="part helps"><summary class="plabel">How this helps</summary><div class="ptext">      It's the difference between "we ran a test" and "we ran a test that could actually answer the question." Any A/B test on review sentiment now has a pre-computed sample size &mdash; the experiment can be scheduled and budgeted, not guessed.</div></details>
@@ -614,7 +645,8 @@ document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('c
         : val>=0 ? `rgba(148,29,28,${(a*0.62).toFixed(2)})`
                  : `rgba(31,84,147,${(a*0.62).toFixed(2)})`;
       const fg = a>0.45 ? '#fff' : 'inherit';
-      return `<td style="background:${bg};color:${fg}">${val.toFixed(2)}</td>`;
+      if(i===j) return `<td style="background:${bg};color:${fg}">${val.toFixed(2)}</td>`;
+      return `<td class="tip" style="background:${bg};color:${fg}" data-tip="<b>Correlation coefficient.</b> Runs &minus;1 (move opposite) through 0 (unrelated) to +1 (lockstep). Guide: under 0.1 negligible, 0.1&ndash;0.3 weak, 0.3&ndash;0.5 moderate, above 0.5 strong.">${val.toFixed(2)}</td>`;
     };
     const rowsHtml=(m)=>co.variables.map((r,i)=>
       `<tr><th>${r}</th>${co.variables.map((c,j)=>cellHtml(m[i][j],i,j)).join('')}</tr>`).join('');
@@ -631,6 +663,25 @@ document.querySelectorAll('#lineToggle button').forEach(b=>b.addEventListener('c
   window.__toggleAll=function(open){
     document.querySelectorAll('#verdicts details.part').forEach(d=>{d.open=open;});
   };
+
+  /* ---------- skewness exhibit (figures rendered by the Python pipeline) ---------- */
+  const ex=document.getElementById('skewex');
+  if(ex && DATA.skewfigs && DATA.skewfigs.length){
+    ex.innerHTML=`<div class="chooser" style="margin-top:20px">
+      <div class="chtitle">The skewness problem &mdash; why the classic tests were benched</div>
+      <p class="chintro">These three shapes are the reason this chapter reaches for rank-based tests: a t-test assumes a bell curve, and none of these is one. The figures are drawn by the Python statistics stage (matplotlib) from the cleaned data &mdash; this report only displays them; the exploration notebook regenerates them live.</p>
+      ${DATA.skewfigs.map(f=>`<figure class="skewfig">
+        <img src="${f.img}" alt="${f.title} distribution">
+        <figcaption><b>${f.title}</b> &mdash; <span class="tip" data-tip="<b>Skewness &mdash; the lopsidedness gauge.</b> What: 0 is a symmetric bell curve; positive means a long right tail of extremes. Why: classic tests assume near-symmetry and mislead when skew is high. Read: above 1 is decidedly skewed, above 3 is extreme.">skew ${f.skew}</span> &middot; mean ${f.mean} vs median ${f.median} &mdash; when the mean towers over the median, a handful of extremes is dragging it.</figcaption>
+      </figure>`).join('')}
+    </div>`;
+  }
+
+  /* ---------- hover-to-learn: wire every data-tip to the shared tooltip ---------- */
+  document.querySelectorAll('[data-tip]').forEach(el=>{
+    el.addEventListener('mousemove',ev=>showTip(el.getAttribute('data-tip'),ev));
+    el.addEventListener('mouseleave',hideTip);
+  });
 })();
 
 /* ---------- advocates table ---------- */
