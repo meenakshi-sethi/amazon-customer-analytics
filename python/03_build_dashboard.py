@@ -305,7 +305,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     <div class="edition">
       <span>Vol. I &middot; No. 1 &middot; Data cut: __DATE_MIN__ &ndash; __DATE_MAX__</span>
       <span>SQL &middot; Python &middot; Statistics</span>
-      <span><a class="repolink" href="__REPO_URL__">Code &amp; methodology on GitHub &#8599;</a></span>
+      <span><a class="repolink" href="__REPO_URL__">Interactive Report &#8599;</a></span>
     </div>
   </div>
 

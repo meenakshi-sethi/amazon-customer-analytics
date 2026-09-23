@@ -166,7 +166,7 @@ def test_dashboard_teaching_elements():
         ("__toggleAll", "expand/collapse explanations"),
         ("<details class=\"chooser\">", "collapsible method chooser"),
         ("href=\"#c1\"", "clickable taxonomy chips"),
-        ("repolink", "masthead GitHub repo link"),
+        ("repolink", "masthead interactive-report link"),
         ("id=\"c7\"", "closing editorial chapter"),
         ("edact", "finding-to-action pairing cards"),
     ]:
