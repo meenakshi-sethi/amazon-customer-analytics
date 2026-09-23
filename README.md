@@ -1,7 +1,7 @@
 # The Fine Food Review Files
 ### Amazon Customer Analytics — Retention & Advocacy Intelligence
 
-**[Interactive Report](dashboard.html)** · SQL, Python, statistics, tests, and reproducible methodology.
+**SQL + Python + statistical inference** — SQLite · pandas · TextBlob · scipy · statsmodels | **[Interactive Report](dashboard.html)**
 
 An end-to-end customer analytics investigation over **568,454 Amazon fine-food reviews (Oct 1999 – Oct 2012)**: SQL-driven data quality enforcement, RF-E customer segmentation, validated sentiment analysis, inferential statistics, and an activation-ready advocate shortlist — delivered as a reproducible pipeline and an interactive, zero-dependency [dashboard](dashboard.html).
 
@@ -10,14 +10,6 @@ An end-to-end customer analytics investigation over **568,454 Amazon fine-food r
 > **Read the deliverable first:** open [`dashboard.html`](dashboard.html) — an editorial-style interactive journal generated programmatically from the pipeline's exports. A Tableau Public edition is in preparation.
 
 ---
-
-## Resume version
-
-**Amazon Customer Analytics — Retention & Advocacy** | *SQL · Python · Statistics* | **[Interactive Report](dashboard.html)**
-
-- Removed 174K duplicate reviews with SQL quality checks, producing 394K trusted records for analysis.
-- Identified 9K+ hidden detractors and 9K+ hidden advocates by validating text sentiment against star ratings.
-- Segmented 256K customers into six RF-E groups and shortlisted 30 advocates for targeted activation.
 
 ## 1. Executive Summary
 
