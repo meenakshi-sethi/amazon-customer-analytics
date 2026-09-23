@@ -83,8 +83,8 @@ TEMPLATE = r"""<!DOCTYPE html>
   }
   *{margin:0;padding:0;box-sizing:border-box}
   html{scroll-behavior:smooth}
-  body{background:var(--paper);color:var(--ink);
-       font-family:Georgia,'Times New Roman',serif;line-height:1.65;font-size:16px}
+    body{background:var(--paper);color:var(--ink);
+      font-family:Georgia,'Times New Roman',serif;line-height:1.65;font-size:18px}
   #progress{position:fixed;top:0;left:0;height:3px;background:var(--oxblood);width:0%;z-index:99}
   .sheet{max-width:1180px;margin:0 auto;padding:48px 42px 80px}
   .label{font-family:'Helvetica Neue',Arial,sans-serif;font-size:11px;letter-spacing:.22em;
@@ -105,7 +105,7 @@ TEMPLATE = r"""<!DOCTYPE html>
 
   /* toc */
   .toc{margin:30px 0 8px;columns:2;column-gap:40px}
-  .toc a{display:block;text-decoration:none;color:var(--ink);font-size:14.5px;padding:5px 0;
+  .toc a{display:block;text-decoration:none;color:var(--ink);font-size:16px;padding:6px 0;
          border-bottom:1px dotted var(--rule);break-inside:avoid}
   .toc a:hover{color:var(--oxblood)}
   .toc a .no{color:var(--gold);font-style:italic;margin-right:8px}
@@ -123,16 +123,16 @@ TEMPLATE = r"""<!DOCTYPE html>
   .chap.in{opacity:1;transform:none}
   .chaphead{display:flex;align-items:baseline;gap:14px;margin:56px 0 6px}
   .chaphead .no{font-size:34px;font-style:italic;color:var(--gold);font-weight:400}
-  .chaphead h2{font-size:26px;font-weight:700;letter-spacing:-.3px}
+  .chaphead h2{font-size:30px;font-weight:700;letter-spacing:-.3px}
   .chaphead .tag{margin-left:auto;text-align:right}
-  .lede{font-size:17.5px;font-style:italic;color:var(--muted);margin-bottom:18px;max-width:640px}
-  .chap p.body{margin-bottom:14px;max-width:820px}
+  .lede{font-size:21px;font-style:italic;color:var(--muted);margin-bottom:20px;max-width:940px}
+  .chap p.body{margin-bottom:18px;max-width:980px}
   .chap p.body b{font-weight:700}
   .dropcap::first-letter{font-size:52px;float:left;line-height:.82;padding:4px 8px 0 0;
                          color:var(--oxblood);font-weight:700}
 
   /* audit table (chapter I) */
-  table.print{width:100%;border-collapse:collapse;font-size:14px;margin:14px 0 6px}
+  table.print{width:100%;border-collapse:collapse;font-size:16px;margin:14px 0 6px}
   table.print th{font-family:'Helvetica Neue',Arial,sans-serif;font-size:10.5px;letter-spacing:.14em;
     text-transform:uppercase;color:var(--muted);text-align:left;padding:7px 10px;
     border-top:2px solid var(--ink);border-bottom:1px solid var(--ink)}
@@ -246,12 +246,12 @@ TEMPLATE = r"""<!DOCTYPE html>
   .primer{margin:26px 0 8px;border:1px solid var(--rule);background:rgba(0,0,0,.025);
           padding:20px 24px;border-radius:3px}
   .primer h3{font-size:15px;margin:0 0 10px;letter-spacing:.02em}
-  .primer p{font-size:14px;line-height:1.65;margin:0 0 10px}
+  .primer p{font-size:16px;line-height:1.65;margin:0 0 12px;max-width:980px}
   .primer p:last-child{margin-bottom:0}
   .primer .term{font-weight:700}
   .primer .plain{display:block;margin-top:14px;padding-top:12px;border-top:1px dashed var(--rule);
                  font-size:13px;color:var(--muted);font-style:italic}
-  .plainnote{font-size:13.5px;color:var(--muted);border-left:3px solid var(--gold);
+  .plainnote{font-size:15.5px;color:var(--muted);border-left:3px solid var(--gold);
              padding:6px 0 6px 14px;margin:16px 0 0;font-style:italic}
 
   /* hover-to-learn parameter tooltips + skewness exhibit */
@@ -327,7 +327,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     <a class="taxchip used tip" href="#c4" data-tip="<b>Diagnostic analysis.</b> Asks why something happened by examining relationships between variables. Takes you to Chapter IV, the sentiment cross-tab.">Diagnostic<span class="q">why did it happen?</span></a>
     <a class="taxchip used tip" href="#c5" data-tip="<b>Inferential analysis.</b> Does the pattern hold beyond this sample? Hypothesis tests, p-values, effect sizes. Takes you to Chapter V, the verdicts.">Inferential<span class="q">does it hold up?</span></a>
   </div>
-  <p class="body" style="font-size:12px;color:var(--muted);margin:6px 0 0">The kinds of analysis this report performs &mdash; click one to jump to where it happens; hover to learn what it's for.</p>
+  <p class="body" style="font-size:15px;color:var(--muted);margin:6px 0 0">The kinds of analysis this report performs &mdash; click one to jump to where it happens; hover to learn what it's for.</p>
   <hr class="rule double">
 
   <!-- ================= READER'S GUIDE (plain-language primer) ================= -->
@@ -354,7 +354,7 @@ TEMPLATE = r"""<!DOCTYPE html>
       <div class="box" style="border-width:2px"><div class="n" data-count="393931">0</div><div class="label">clean reviews</div></div>
     </div>
     <table class="print" id="auditTable"></table>
-    <p class="body" style="font-size:13.5px;color:var(--muted)">Full row-level audit exported to <i>wrangling_audit.json</i>; the pytest suite reconciles removed rows against the final count.</p>
+    <p class="body" style="font-size:15px;color:var(--muted)">Full row-level audit exported to <i>wrangling_audit.json</i>; the pytest suite reconciles removed rows against the final count.</p>
   </section>
 
   <!-- ================= II. SEGMENTS ================= -->
@@ -379,7 +379,7 @@ TEMPLATE = r"""<!DOCTYPE html>
       <button data-series="active_users">Active reviewers</button>
     </div>
     <svg id="line" width="100%" height="250" viewBox="0 0 560 250" preserveAspectRatio="none"></svg>
-    <p class="body" style="font-size:13.5px;color:var(--muted)">The widening gap between new and active reviewers in 2011–12 is the retention story: acquisition outpaced repeat participation.</p>
+    <p class="body" style="font-size:15px;color:var(--muted)">The widening gap between new and active reviewers in 2011–12 is the retention story: acquisition outpaced repeat participation.</p>
     <p class="plainnote">In plain words: the shop got busier every year, but more and more of the crowd were first-timers who never came back. Growth that relies on strangers walking in &mdash; rather than regulars returning &mdash; is expensive growth.</p>
   </section>
 
@@ -431,7 +431,7 @@ TEMPLATE = r"""<!DOCTYPE html>
     </details>
     <div id="skewex"></div>
     <div id="verdicts"></div>
-    <p class="body" style="font-size:13.5px;color:var(--muted)">Why non-parametric? Reviews-per-customer skews past 12, helpfulness votes are log-log skewed, and polarity is bounded and tri-modal. The t-test's normality assumption fails on all three — so Mann-Whitney U and chi-square carry the case.</p>
+    <p class="body" style="font-size:15px;color:var(--muted)">Why non-parametric? Reviews-per-customer skews past 12, helpfulness votes are log-log skewed, and polarity is bounded and tri-modal. The t-test's normality assumption fails on all three — so Mann-Whitney U and chi-square carry the case.</p>
     <p class="plainnote">In plain words: some of these numbers are extremely lopsided &mdash; a handful of customers write hundreds of reviews while most write one. Classic tests assume nicely balanced data, so they'd give misleading answers here. The tests used instead are the ones built for lopsided data. And the surprise finding: the most prolific reviewers are <i>not</i> the most trusted &mdash; shoppers trust a review a bit less, on average, from someone who writes them constantly. Quality, not quantity, earns trust.</p>
   </section>
 
